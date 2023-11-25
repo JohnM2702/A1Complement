@@ -8,24 +8,43 @@ SIZE = 1024
 FORMAT = "utf-8"
 DISCONNECT_MSG = "!DISCONNECT"
 
+
+all_players = []
+
 def receive_messages(client_socket):
     while True:
         try:
             msg = client_socket.recv(SIZE).decode(FORMAT)
             print(f"[SERVER] {msg}")
+        except ConnectionAbortedError:
+            print(f"Disconnected from server")
+            break
+        except ConnectionResetError:
+            print(f"[ERROR] Server closed unexpectedly. Check server status.")
+            break
         except Exception as e:
             print(f"[ERROR] {e}")
             break
 
 def main():
+    pname = "PNAME:" + str(input("Player Name: "))
+    
+    
     # Client initialization
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
-    print(f"[CONNECTED] Client connected to server at {IP}:{PORT}")
+    print(f"[THIS CLIENT] Connected to server at {IP}:{PORT}")
 
     # Handle server incoming msg
     receive_thread = threading.Thread(target=receive_messages, args=(client,))
     receive_thread.start()
+    
+    # Send player information
+    try:
+        client.send(pname.encode(FORMAT))
+    except Exception as e:
+        print(f"[ERROR] {e}")
+            
 
     connected = True
     while connected:
