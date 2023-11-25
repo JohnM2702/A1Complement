@@ -9,24 +9,21 @@ IP = socket.gethostbyname(socket.gethostname())
 PORT = 5566
 ADDR = (IP, PORT)
 SERVER_ID = (f"[Server {socket.gethostname()} ({IP} @ {PORT})]")
-SIZE = 1024
+SIZE = 4096
 FORMAT = "utf-8"
 DISCONNECT_MSG = "!DISCONNECT"
 
 clients = []
 clients_lock = threading.Lock()
 
-
-
-def broadcast_message(sender_addr, item):
+def broadcast_message_serialized(message):
     for client in clients:
         try:
-            msg = pickle.dumps(item)
-            client["connection"].sendall(msg)
+            client["connection"].sendall(b'SERIALIZED:' + pickle.dumps(message))
         except Exception as e:
             print(f"[ERROR] {e}")
             
-def broadcast_message(sender_addr, message):
+def broadcast_message_text(sender_addr, message):
     for client in clients:
         try:
             msg = f"[{sender_addr}] {message}"
@@ -34,14 +31,14 @@ def broadcast_message(sender_addr, message):
         except Exception as e:
             print(f"[ERROR] {e}")
 
-def forward_message(sender_addr, message):
-    for client in clients:
-        if client["address"] != sender_addr:
-            try:
-                msg = f"[{sender_addr}] {message}"
-                client["connection"].send(msg.encode(FORMAT))
-            except Exception as e:
-                print(f"[ERROR] {e}")
+# def forward_message(sender_addr, message):
+#     for client in clients:
+#         if client["address"] != sender_addr:
+#             try:
+#                 msg = f"[{sender_addr}] {message}"
+#                 client["connection"].send(msg.encode(FORMAT))
+#             except Exception as e:
+#                 print(f"[ERROR] {e}")
 
 def handle_client(conn, addr):
     
@@ -99,7 +96,7 @@ def main():
     print(f"{SERVER_ID} [GAME] All players have connected to the server")
     print(f"{SERVER_ID} [GAME] Game is starting...")
     print(f"{SERVER_ID} [GAME] Players: {game.get_player_names_str()}")
-    broadcast_message(SERVER_ID, f"PLIST: {{game.get_player_names_str()}}")
+    broadcast_message_serialized(game.get_player_names_str())
     
     
     

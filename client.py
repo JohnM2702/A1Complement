@@ -1,10 +1,11 @@
 import socket
 import threading
+import pickle
 
 IP = socket.gethostbyname(socket.gethostname())
 PORT = 5566
 ADDR = (IP, PORT)
-SIZE = 1024
+SIZE = 4096
 FORMAT = "utf-8"
 DISCONNECT_MSG = "!DISCONNECT"
 
@@ -16,6 +17,12 @@ def receive_messages(client_socket):
         try:
             msg = client_socket.recv(SIZE).decode(FORMAT)
             print(f"[SERVER] {msg}")
+            
+            if b'SERIALIZED:' in msg:
+                temp = msg.replace(b'SERIALIZED:','')
+                temp = pickle.loads(bytes(temp))
+                print(temp)
+            
         except ConnectionAbortedError:
             print(f"Disconnected from server")
             break
