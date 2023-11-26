@@ -53,6 +53,12 @@ def draw_mechanics():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
+            if event.type == bg_timer:
+                update_menu_bg()
+        
+        SCREEN.fill(('#e1d4bb'))
+        SCREEN.blit(menu_bg,(0,menu_bg_y))
+        SCREEN.blit(menu_bg,(0,menu_bg_y-menu_bg_height+6))
         SCREEN.blit(mechanics_bg,mechanics_bg_rect)
         SCREEN.blit(logo,logo_rect)
         
@@ -106,8 +112,9 @@ def main_menu():
         lmb_clicked = pygame.mouse.get_pressed()[0]
         if mechanics_rect.collidepoint(mx,my):
             if click:
+                field_clicked = False
                 draw_mechanics()
-        elif name_field_rect.collidepoint(mx,my) and lmb_clicked:
+        if name_field_rect.collidepoint(mx,my) and lmb_clicked:
             field_clicked = True
         elif field_clicked and lmb_clicked and not name_field_rect.collidepoint(mx,my):
             field_clicked = False
