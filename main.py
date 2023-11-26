@@ -26,14 +26,17 @@ logo_rect = logo.get_rect(topleft = (280,46))
 name_field = pygame.image.load(os.path.join('assets','name_field.png')).convert_alpha()
 name_field_rect = name_field.get_rect(topleft = (292,325))
 
-create_game = pygame.image.load(os.path.join('assets','create_game.png')).convert_alpha()
-create_game_rect = create_game.get_rect(topleft = (355,417))
+create_btn = pygame.image.load(os.path.join('assets','create.png')).convert_alpha()
+create_btn_hover = pygame.image.load(os.path.join('assets','create_hover.png')).convert_alpha()
+create_btn_rect = create_btn.get_rect(topleft = (355,417))
 
-join_game = pygame.image.load(os.path.join('assets','join_game.png')).convert_alpha()
-join_game_rect = join_game.get_rect(topleft = (355,525))
+join_btn = pygame.image.load(os.path.join('assets','join.png')).convert_alpha()
+join_btn_hover = pygame.image.load(os.path.join('assets','join_hover.png')).convert_alpha()
+join_btn_rect = join_btn.get_rect(topleft = (355,525))
 
-mechanics = pygame.image.load(os.path.join('assets','mechanics.png')).convert_alpha()
-mechanics_rect = mechanics.get_rect(topleft = (355,633))
+mechanics_btn = pygame.image.load(os.path.join('assets','mechanics.png')).convert_alpha()
+mechanics_btn_hover = pygame.image.load(os.path.join('assets','mechanics_hover.png')).convert_alpha()
+mechanics_btn_rect = mechanics_btn.get_rect(topleft = (355,633))
 
 mechanics_bg = pygame.image.load(os.path.join('assets','mechanics_bg.png')).convert_alpha()
 mechanics_bg_rect = mechanics_bg.get_rect(topleft=(26,35))
@@ -73,14 +76,13 @@ def update_menu_bg():
         menu_bg_y = 0  
     
     
-# click = False
 def main_menu():
     manager = TextInputManager(validator=lambda input: len(input) <= 15)
     name_input = TextInputVisualizer(manager,name_font,cursor_blink_interval=500,cursor_width=2)
     field_clicked = False
     
     while True:
-        click = False
+        mechanics_clicked = False
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
@@ -88,7 +90,7 @@ def main_menu():
                 exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    click = True
+                    mechanics_clicked = True
             if event.type == bg_timer:
                 update_menu_bg()
                     
@@ -104,21 +106,28 @@ def main_menu():
         SCREEN.blit(name_field, name_field_rect)
         SCREEN.blit(name_input.surface,(325,332))
         
-        SCREEN.blit(create_game,create_game_rect)
-        SCREEN.blit(join_game,join_game_rect)
-        SCREEN.blit(mechanics,mechanics_rect)
+        SCREEN.blit(create_btn,create_btn_rect)
+        SCREEN.blit(join_btn,join_btn_rect)
+        SCREEN.blit(mechanics_btn,mechanics_btn_rect)
         
         mx, my = pygame.mouse.get_pos()
         lmb_clicked = pygame.mouse.get_pressed()[0]
-        if mechanics_rect.collidepoint(mx,my):
-            if click:
+        
+        if create_btn_rect.collidepoint(mx,my):
+            SCREEN.blit(create_btn_hover,create_btn_rect)   # Display hovered buttons
+        elif join_btn_rect.collidepoint(mx,my):
+            SCREEN.blit(join_btn_hover,join_btn_rect)
+        if mechanics_btn_rect.collidepoint(mx,my):
+            SCREEN.blit(mechanics_btn_hover,mechanics_btn_rect)
+            if mechanics_clicked:
                 field_clicked = False
-                draw_mechanics()
+                draw_mechanics()    # Display mechanics
+        
         if name_field_rect.collidepoint(mx,my) and lmb_clicked:
             field_clicked = True
         elif field_clicked and lmb_clicked and not name_field_rect.collidepoint(mx,my):
             field_clicked = False
-        
+        # Allow editing of player name if name field was clicked
         if field_clicked: name_input.update(events)
         
         pygame.display.update()
