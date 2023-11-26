@@ -4,7 +4,7 @@ pygame.init()
 
 FPS = 60
 WIDTH,HEIGHT = 1024,768
-WINDOW = pygame.display.set_mode((WIDTH,HEIGHT))
+SCREEN = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Guessing Galore")
 clock = pygame.time.Clock()
 
@@ -13,7 +13,9 @@ font_italic = pygame.font.Font(os.path.join('fonts','InriaSans-Italic.ttf'),20)
 
 
 # Menu assets
-menu_bg = pygame.image.load(os.path.join('assets','menu_bg.png')).convert()
+menu_bg = pygame.image.load(os.path.join('assets','menu_bg.png')).convert_alpha()
+menu_bg_y = 0
+menu_bg_height = menu_bg.get_height()
 game_bg = pygame.image.load(os.path.join('assets','game_bg.png')).convert()
 
 logo = pygame.image.load(os.path.join('assets','logo.png')).convert_alpha()
@@ -35,6 +37,11 @@ mechanics_bg = pygame.image.load(os.path.join('assets','mechanics_bg.png')).conv
 mechanics_bg_rect = mechanics_bg.get_rect(topleft=(26,35))
 
 
+# Timer
+bg_timer = pygame.USEREVENT + 1
+pygame.time.set_timer(bg_timer,50)
+
+
 def draw_mechanics():
     running = True 
     while running:
@@ -45,15 +52,21 @@ def draw_mechanics():
                 if event.key == pygame.K_ESCAPE:
                     running = False
                     
-        WINDOW.blit(mechanics_bg,mechanics_bg_rect)
-        WINDOW.blit(logo,logo_rect)
+        SCREEN.blit(mechanics_bg,mechanics_bg_rect)
+        SCREEN.blit(logo,logo_rect)
         
         pygame.display.update()
         clock.tick(FPS)
-        
-        
-# click = False
 
+
+def update_menu_bg():
+    global menu_bg_y
+    menu_bg_y += 1
+    if menu_bg_y > menu_bg_height:
+        menu_bg_y = 0  
+    
+    
+# click = False
 def main_menu():
     while True:
         click = False
@@ -64,19 +77,23 @@ def main_menu():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     click = True
+            if event.type == bg_timer:
+                update_menu_bg()
                     
-
-        WINDOW.blit(menu_bg,(0,0))
-        WINDOW.blit(logo,logo_rect)
+        SCREEN.fill(('#e1d4bb'))
+        SCREEN.blit(menu_bg,(0,menu_bg_y))
+        SCREEN.blit(menu_bg,(0,menu_bg_y-menu_bg_height))
+        
+        SCREEN.blit(logo,logo_rect)
         
         name_label = font_italic.render('Name', True, (0,0,0))
         name_label_rect = name_label.get_rect(topleft=(325,301))
-        WINDOW.blit(name_label, name_label_rect)
+        SCREEN.blit(name_label, name_label_rect)
         
-        WINDOW.blit(name_field, name_field_rect)
-        WINDOW.blit(create_game,create_game_rect)
-        WINDOW.blit(join_game,join_game_rect)
-        WINDOW.blit(mechanics,mechanics_rect)
+        SCREEN.blit(name_field, name_field_rect)
+        SCREEN.blit(create_game,create_game_rect)
+        SCREEN.blit(join_game,join_game_rect)
+        SCREEN.blit(mechanics,mechanics_rect)
         
         mx, my = pygame.mouse.get_pos()
         if mechanics_rect.collidepoint(mx,my):
@@ -85,5 +102,6 @@ def main_menu():
         
         pygame.display.update()
         clock.tick(FPS)
+        
         
 main_menu()
