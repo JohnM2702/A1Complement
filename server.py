@@ -95,10 +95,4 @@ class Server:
 # if __name__ == "__main__":
 x = Server()
 x.start()
-input("Enter to start")
-x.broadcast_message("among us")
-x.broadcast_message("sus")
-x.broadcast_message("verb")
-x.broadcast_message("tae")
-x.broadcast_message("random")
 
