@@ -9,12 +9,19 @@ SCREEN = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Guessing Galore")
 clock = pygame.time.Clock()
 
+# Colors
+BLUE = '#537188'
+BEIGE = '#E1D4BB'
 
 # Fonts
 font = pygame.font.Font(os.path.join('fonts','InriaSans-Regular.ttf'),20)
 font_italic = pygame.font.Font(os.path.join('fonts','InriaSans-Italic.ttf'),20)
 name_font = pygame.font.Font(os.path.join('fonts','Lalezar-Regular.ttf'),30)
+answer_font = pygame.font.Font(os.path.join('fonts','Lalezar-Regular.ttf'),50)
 
+# Player Name
+manager = TextInputManager(validator=lambda input: len(input) <= 15)
+name_input = TextInputVisualizer(manager,name_font,cursor_blink_interval=500,cursor_width=2)
 
 # Sounds
 btn_sfx = pygame.mixer.Sound(os.path.join('audio','button_hover.wav'))
@@ -22,8 +29,8 @@ btn_sfx = pygame.mixer.Sound(os.path.join('audio','button_hover.wav'))
 
 # Graphics
 menu_bg = pygame.image.load(os.path.join('assets','menu_bg.png')).convert_alpha()
-menu_bg_y = 0
-menu_bg_height = menu_bg.get_height()
+bg_y = 0
+bg_height = menu_bg.get_height()
 game_bg = pygame.image.load(os.path.join('assets','game_bg.png')).convert_alpha()
 
 logo = pygame.image.load(os.path.join('assets','logo.png')).convert_alpha()
@@ -47,13 +54,19 @@ mechanics_btn_rect = mechanics_btn.get_rect(topleft = (355,633))
 mechanics_bg = pygame.image.load(os.path.join('assets','mechanics_bg.png')).convert_alpha()
 mechanics_bg_rect = mechanics_bg.get_rect(topleft=(26,35))
 
+question_box = pygame.image.load(os.path.join('assets','question_box.png')).convert_alpha()
+answer_box = pygame.image.load(os.path.join('assets','answer_box.png')).convert_alpha()
+player_card = pygame.image.load(os.path.join('assets','player_card.png')).convert_alpha()
+pcard_width = player_card.get_width()
+pcard_height = player_card.get_height()
+
 
 # Timers (custom events)
 bg_timer = pygame.USEREVENT + 1
 pygame.time.set_timer(bg_timer,50)
 
 
-def draw_mechanics():
+def mechanics():
     running = True 
     while running:
         for event in pygame.event.get():
@@ -63,36 +76,86 @@ def draw_mechanics():
                 if event.key == pygame.K_ESCAPE:
                     running = False
             if event.type == bg_timer:
-                update_menu_bg()
+                update_bg()
         
-        SCREEN.fill(('#e1d4bb'))
-        SCREEN.blit(menu_bg,(0,menu_bg_y))
-        SCREEN.blit(menu_bg,(0,menu_bg_y-menu_bg_height+6))
+        SCREEN.fill((BEIGE))
+        SCREEN.blit(menu_bg,(0,bg_y))
+        SCREEN.blit(menu_bg,(0,bg_y-bg_height+6))
         SCREEN.blit(mechanics_bg,mechanics_bg_rect)
         SCREEN.blit(logo,logo_rect)
         
         pygame.display.update()
         clock.tick(FPS)
-
+        
+        
+def game_proper():
+    # Temporary max input length
+    # ideal: dynamically set when client can receive answers from server
+    manager = TextInputManager(validator=lambda input: len(input) <= 15)
+    answer_input = TextInputVisualizer(manager,answer_font,cursor_blink_interval=500,cursor_width=0)
+    ongoing = True
+    
+    while ongoing:
+        events = pygame.event.get()
+        for event in events: 
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == bg_timer:
+                update_bg()
+            if event.type == pygame.KEYDOWN:    # Back to main menu (temp only!)
+                if event.key == pygame.K_ESCAPE:
+                    ongoing = False
+        
+        SCREEN.fill((BLUE))
+        SCREEN.blit(game_bg,(0,bg_y))
+        SCREEN.blit(game_bg,(0,bg_y-bg_height+6))
+        SCREEN.blit(question_box,(23,18))
+        
+        # Temporary hardcoded players
+        # ideal: dynamically add when client can receive number of players from server
+        SCREEN.blit(player_card,(23,494))
+        p1_name = name_font.render(name_input.value,1,'Black')
+        SCREEN.blit(p1_name,(35,562))
+        p1_score = 0
+        p1_score_surf = name_font.render(str(p1_score),1,'Black')
+        SCREEN.blit(p1_score_surf,(35,602))
+        
+        x, y = 271, 283
+        for i in range(3):
+            SCREEN.blit(player_card,(x,494))
+            p_name = name_font.render('Player',1,'Black')
+            SCREEN.blit(p_name,(y,562))
+            p_score_surf = name_font.render(str(x),1,'Black')
+            SCREEN.blit(p_score_surf,(y,602))
+            x += 248
+            y += 248
+            
+        SCREEN.blit(answer_box,(23,669))
+        answer_input_rect = answer_input.surface.get_rect(center=(WIDTH/2,715))
+        SCREEN.blit(answer_input.surface,answer_input_rect)
+        answer_input.update(events)
+        
+        pygame.display.update()
+        clock.tick(FPS)
+        
 
 # Scrolling background effect
-def update_menu_bg():
-    global menu_bg_y
-    menu_bg_y += 1
-    if menu_bg_y > menu_bg_height:
-        menu_bg_y = 0  
+def update_bg():
+    global bg_y
+    bg_y += 1
+    if bg_y > bg_height:
+        bg_y = 0  
     
     
 def main_menu():
-    manager = TextInputManager(validator=lambda input: len(input) <= 15)
-    name_input = TextInputVisualizer(manager,name_font,cursor_blink_interval=500,cursor_width=2)
     field_clicked = False
     create_btn_hovered = False
     join_btn_hovered = False
     mechanics_btn_hovered = False
     
     while True:
-        mechanics_clicked = False
+        lmb_clicked = False
         
         events = pygame.event.get()
         for event in events:
@@ -101,14 +164,14 @@ def main_menu():
                 exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    mechanics_clicked = True
+                    lmb_clicked = True
             if event.type == bg_timer:
-                update_menu_bg()
+                update_bg()
 
         # Background
-        SCREEN.fill(('#e1d4bb'))
-        SCREEN.blit(menu_bg,(0,menu_bg_y))
-        SCREEN.blit(menu_bg,(0,menu_bg_y-menu_bg_height+6))
+        SCREEN.fill((BEIGE))
+        SCREEN.blit(menu_bg,(0,bg_y))
+        SCREEN.blit(menu_bg,(0,bg_y-bg_height+6))
         
         # Logo
         SCREEN.blit(logo,logo_rect)
@@ -126,7 +189,6 @@ def main_menu():
         SCREEN.blit(mechanics_btn,mechanics_btn_rect)
         
         mx, my = pygame.mouse.get_pos()
-        lmb_clicked = pygame.mouse.get_pressed()[0]
         
         # Handle button hover & sfx
         if not field_clicked:
@@ -137,6 +199,8 @@ def main_menu():
                     join_btn_hovered = False
                     mechanics_btn_hovered = False
                 SCREEN.blit(create_btn_hover, create_btn_rect)
+                if lmb_clicked:
+                    game_proper()
             elif join_btn_rect.collidepoint(mx, my):
                 if not join_btn_hovered:
                     btn_sfx.play()
@@ -151,10 +215,10 @@ def main_menu():
                     create_btn_hovered = False
                     join_btn_hovered = False
                 SCREEN.blit(mechanics_btn_hover, mechanics_btn_rect)
-                if mechanics_clicked:
-                    field_clicked = False
-                    draw_mechanics()  # Display mechanics
+                if lmb_clicked:
+                    mechanics()  # Display mechanics
             else: 
+                field_clicked = False
                 mechanics_btn_hovered = False
                 create_btn_hovered = False
                 join_btn_hovered = False
@@ -164,7 +228,6 @@ def main_menu():
             field_clicked = True
         elif field_clicked and lmb_clicked and not name_field_rect.collidepoint(mx,my):
             field_clicked = False
-        
         if field_clicked: name_input.update(events)
         
         pygame.display.update()
