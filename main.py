@@ -16,7 +16,7 @@ font_italic = pygame.font.Font(os.path.join('fonts','InriaSans-Italic.ttf'),20)
 menu_bg = pygame.image.load(os.path.join('assets','menu_bg.png')).convert_alpha()
 menu_bg_y = 0
 menu_bg_height = menu_bg.get_height()
-game_bg = pygame.image.load(os.path.join('assets','game_bg.png')).convert()
+game_bg = pygame.image.load(os.path.join('assets','game_bg.png')).convert_alpha()
 
 logo = pygame.image.load(os.path.join('assets','logo.png')).convert_alpha()
 logo_rect = logo.get_rect(topleft = (280,46))
