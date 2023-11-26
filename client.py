@@ -6,94 +6,77 @@ from time import sleep
 from gamestate import GameState
 import time
 
-# Client Configurations
-IP = socket.gethostbyname(socket.gethostname())
-PORT = 5566
-ADDR = (IP, PORT)
-SIZE = 4096
-FORMAT = "utf-8"
-DISCONNECT_MSG = "!DISCONNECT"
-index = -1
+class Server:
+    def __init__(self, ip = None, port = 5566, size = 4096, max_connection = 5) -> None:
+        self.ip = socket.gethostbyname(socket.gethostname())
+        self.port = port
+        self.addr = (self.ip, self.port)
+        self.size = size
+        self.format = "utf-8"
+        self.client_id = (f"[Server {socket.gethostname()} ({self.ip}:{self.port})]")
+        
+        self.client = None
 
-def receive_messages(client_socket):
-    while True:
-        try:
-            header = client_socket.recv(len(b'SERIALIZED:'))
-            if header == b'SERIALIZED:':
-                data = client_socket.recv(SIZE)
-                temp = pickle.loads(data)
-                print(temp)
-            else:
-                print(f"[SERVER] {header.decode(FORMAT)}")
+    def receive_messages(self, client_socket):
+        while True:
+            try:
+                recv_data_binary = client_socket.recv(self.size)
+            except ConnectionAbortedError:
+                print(f"Disconnected from server")
+                break
+            except ConnectionResetError:
+                print(f"[ERROR] Server closed unexpectedly. Check server status.")
+                break
+            except Exception as e:
+                print(f"[ERROR] {e}")
+                break
+                
+            try:
+                recv_data = recv_data_binary.decode()
+            except UnicodeDecodeError:
+                recv_data = pickle.loads(recv_data_binary)
+            except Exception as e:
+                print(f"[ERROR] {e}")
+                break
             
-            if 'GSET:' in header.decode(FORMAT):
-                index = header.decode(FORMAT).replace('GSET:','')
-                
-                
-        except ConnectionAbortedError:
-            print(f"Disconnected from server")
-            connected = False
-            break
-        except ConnectionResetError:
-            print(f"[ERROR] Server closed unexpectedly. Check server status.")
-            connected = False
-            break
+            print(f"{recv_data}")
+            
+    
+    def start(self, pname = None):
+        pname = "PNAME:" + str(input("Player Name: "))
+        
+        # Client initialization
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client.connect(self.addr)
+        print(f"[THIS CLIENT] Connected to server at {self.ip}:{self.port}")
+
+        # Handle server incoming msg
+        receive_thread = threading.Thread(target=self.receive_messages, args=(self.client,))
+        receive_thread.start()
+        
+        # Send player information
+        try:
+            self.client.send(pname.encode(self.format))
         except Exception as e:
             print(f"[ERROR] {e}")
-            connected = False
-            break
-
-
-def game_proper(index):
-    word_lists = [
-        ["apple", "banana", "orange"],
-        ["car", "bike", "bus"],
-        ["cat", "dog", "bird"]
-    ]
-    
-    current_word_list = word_lists[index]
-    
-    start_time = time.time()
-
-    while time.time() - start_time < 60:
-        current_word = random.choice(current_word_list)
-        user_guess = input(f"Guess the word: {', '.join(current_word_list)}? ").lower()
-
-        if user_guess == current_word:
-            print("Congratulations! You guessed the word correctly.")
-            break
-        else:
-            print("Incorrect. Try again!")
-
-    print("Time's up! Thanks for playing.")
-
-connected = True
-def main():
-    pname = "PNAME:" + str(input("Player Name: "))
-    
-    # Client initialization
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(ADDR)
-    print(f"[THIS CLIENT] Connected to server at {IP}:{PORT}")
-
-    # Handle server incoming msg
-    receive_thread = threading.Thread(target=receive_messages, args=(client,))
-    receive_thread.start()
-    
-    # Send player information
-    try:
-        client.send(pname.encode(FORMAT))
-    except Exception as e:
-        print(f"[ERROR] {e}")
+                
             
-            
-    sleep(5)
-    game_proper(index)
+    def send_message(self, message):
+        try:
+            if isinstance(message, str):
+                data = message.encode(self.format)
+            else:
+                data = pickle.dumps(message)
+            self.client.send(data)
+        except Exception as e:
+            print(f"[ERROR] {e}")
+        
 
-    
-    
-    client.close()
 
+    # client.close()
 
-if __name__ == "__main__":
-    main()
+x = Server()
+x.start()
+input("Enter to start")
+while True:
+    x.send_message(input("> "))
