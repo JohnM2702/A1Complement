@@ -13,6 +13,8 @@ font = pygame.font.Font(os.path.join('fonts','InriaSans-Regular.ttf'),20)
 font_italic = pygame.font.Font(os.path.join('fonts','InriaSans-Italic.ttf'),20)
 name_font = pygame.font.Font(os.path.join('fonts','Lalezar-Regular.ttf'),30)
 
+btn_sfx = pygame.mixer.Sound(os.path.join('audio','button_hover.wav'))
+
 
 # Menu assets
 menu_bg = pygame.image.load(os.path.join('assets','menu_bg.png')).convert_alpha()
@@ -80,6 +82,9 @@ def main_menu():
     manager = TextInputManager(validator=lambda input: len(input) <= 15)
     name_input = TextInputVisualizer(manager,name_font,cursor_blink_interval=500,cursor_width=2)
     field_clicked = False
+    create_btn_hovered = False
+    join_btn_hovered = False
+    mechanics_btn_hovered = False
     
     while True:
         mechanics_clicked = False
@@ -113,15 +118,35 @@ def main_menu():
         mx, my = pygame.mouse.get_pos()
         lmb_clicked = pygame.mouse.get_pressed()[0]
         
-        if create_btn_rect.collidepoint(mx,my):
-            SCREEN.blit(create_btn_hover,create_btn_rect)   # Display hovered buttons
-        elif join_btn_rect.collidepoint(mx,my):
-            SCREEN.blit(join_btn_hover,join_btn_rect)
-        if mechanics_btn_rect.collidepoint(mx,my):
-            SCREEN.blit(mechanics_btn_hover,mechanics_btn_rect)
-            if mechanics_clicked:
-                field_clicked = False
-                draw_mechanics()    # Display mechanics
+        if not field_clicked:
+            if create_btn_rect.collidepoint(mx, my):
+                if not create_btn_hovered:
+                    btn_sfx.play()
+                    create_btn_hovered = True
+                    join_btn_hovered = False
+                    mechanics_btn_hovered = False
+                SCREEN.blit(create_btn_hover, create_btn_rect)
+            elif join_btn_rect.collidepoint(mx, my):
+                if not join_btn_hovered:
+                    btn_sfx.play()
+                    join_btn_hovered = True
+                    create_btn_hovered = False
+                    mechanics_btn_hovered = False
+                SCREEN.blit(join_btn_hover, join_btn_rect)
+            elif mechanics_btn_rect.collidepoint(mx, my):
+                if not mechanics_btn_hovered:
+                    btn_sfx.play()
+                    mechanics_btn_hovered = True
+                    create_btn_hovered = False
+                    join_btn_hovered = False
+                SCREEN.blit(mechanics_btn_hover, mechanics_btn_rect)
+                if mechanics_clicked:
+                    field_clicked = False
+                    draw_mechanics()  # Display mechanics
+            else: 
+                mechanics_btn_hovered = False
+                create_btn_hovered = False
+                join_btn_hovered = False
         
         if name_field_rect.collidepoint(mx,my) and lmb_clicked:
             field_clicked = True
