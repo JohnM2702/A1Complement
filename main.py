@@ -1,7 +1,8 @@
 import pygame, os
 from sys import exit 
-pygame.init()
+from pygame_textinput import *
 
+pygame.init()
 FPS = 60
 WIDTH,HEIGHT = 1024,768
 SCREEN = pygame.display.set_mode((WIDTH,HEIGHT))
@@ -10,6 +11,7 @@ clock = pygame.time.Clock()
 
 font = pygame.font.Font(os.path.join('fonts','InriaSans-Regular.ttf'),20)
 font_italic = pygame.font.Font(os.path.join('fonts','InriaSans-Italic.ttf'),20)
+name_font = pygame.font.Font(os.path.join('fonts','Lalezar-Regular.ttf'),30)
 
 
 # Menu assets
@@ -51,7 +53,6 @@ def draw_mechanics():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
-                    
         SCREEN.blit(mechanics_bg,mechanics_bg_rect)
         SCREEN.blit(logo,logo_rect)
         
@@ -68,9 +69,14 @@ def update_menu_bg():
     
 # click = False
 def main_menu():
+    manager = TextInputManager(validator=lambda input: len(input) <= 15)
+    name_input = TextInputVisualizer(manager,name_font,cursor_blink_interval=500,cursor_width=2)
+    field_clicked = False
+    
     while True:
         click = False
-        for event in pygame.event.get():
+        events = pygame.event.get()
+        for event in events:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
@@ -82,23 +88,31 @@ def main_menu():
                     
         SCREEN.fill(('#e1d4bb'))
         SCREEN.blit(menu_bg,(0,menu_bg_y))
-        SCREEN.blit(menu_bg,(0,menu_bg_y-menu_bg_height))
+        SCREEN.blit(menu_bg,(0,menu_bg_y-menu_bg_height+6))
         
         SCREEN.blit(logo,logo_rect)
         
         name_label = font_italic.render('Name', True, (0,0,0))
         name_label_rect = name_label.get_rect(topleft=(325,301))
         SCREEN.blit(name_label, name_label_rect)
-        
         SCREEN.blit(name_field, name_field_rect)
+        SCREEN.blit(name_input.surface,(325,332))
+        
         SCREEN.blit(create_game,create_game_rect)
         SCREEN.blit(join_game,join_game_rect)
         SCREEN.blit(mechanics,mechanics_rect)
         
         mx, my = pygame.mouse.get_pos()
+        lmb_clicked = pygame.mouse.get_pressed()[0]
         if mechanics_rect.collidepoint(mx,my):
             if click:
                 draw_mechanics()
+        elif name_field_rect.collidepoint(mx,my) and lmb_clicked:
+            field_clicked = True
+        elif field_clicked and lmb_clicked and not name_field_rect.collidepoint(mx,my):
+            field_clicked = False
+        
+        if field_clicked: name_input.update(events)
         
         pygame.display.update()
         clock.tick(FPS)
