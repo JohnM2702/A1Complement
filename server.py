@@ -4,90 +4,101 @@ import threading
 from time import sleep
 from gamestate import GameState
 
-# Server Configurations
-IP = socket.gethostbyname(socket.gethostname())
-PORT = 5566
-ADDR = (IP, PORT)
-SIZE = 4096
-FORMAT = "utf-8"
-SERVER_ID = (f"[Server {socket.gethostname()} ({IP} @ {PORT})]")
-DISCONNECT_MSG = "!DISCONNECT"
+class Server:
+    def __init__(self, port = 5566, size = 4096, max_connection = 1) -> None:
+        self.ip = socket.gethostbyname(socket.gethostname())
+        self.port = port
+        self.addr = (self.ip, self.port)
+        self.size = size
+        self.format = "utf-8"
+        self.server_id = (f"[Server {socket.gethostname()} ({self.ip}:{self.port})]")
+        self.max_connection = max_connection
+        
+        self.clients = []
+        self.clients_lock = threading.Lock()
 
-clients = []
-clients_lock = threading.Lock()
+    def broadcast_message(self, message):
+        for client in self.clients:
+            try:
+                if isinstance(message, str):
+                    data = message.encode(self.format)
+                else:
+                    data = pickle.dumps(message)
+                client["connection"].sendall(data)
+            except Exception as e:
+                print(f"[ERROR] {e}")
 
-def broadcast_message(message):
-    for client in clients:
-        try:
-            if isinstance(message, str):
-                header = b''
-                data = message.encode(FORMAT)
-            else:
-                header = b'SERIALIZED:'
-                data = pickle.dumps(message)
-
-            client["connection"].sendall(header + data)
-        except Exception as e:
-            print(f"[ERROR] {e}")
-
-def handle_client(conn, addr):
-    
-    CLIENT_ID = (f"[Client {socket.gethostbyaddr(addr[0])[0]} ({addr[0]} @ {addr[1]})]")
-    print(f"{CLIENT_ID}  Estabilished connection to server.")
-    
-    connected = True
-    while connected:
-        try:
-            msg:str = conn.recv(SIZE).decode(FORMAT)
-            if msg == DISCONNECT_MSG:
+    def handle_client(self, conn, addr):
+        
+        CLIENT_ID = (f"[Client {socket.gethostbyaddr(addr[0])[0]} ({addr[0]} @ {addr[1]})]")
+        print(f"{CLIENT_ID}  Estabilished connection to server.")
+        
+        connected = True
+        while connected:
+            try:
+                recv_data_binary = conn.recv(self.size)
+            except ConnectionResetError:
+                print(f"[{addr[0]}] Disconnected")
                 break
-            print(f"[{addr[0]}] {msg}")
-        except ConnectionResetError:
-            print(f"[{addr[0]}] Disconnected")
-            break
+            except Exception as e:
+                print(f"[ERROR] {e}")
+                break
+            
+            try:
+                recv_data = recv_data_binary.decode()
+            except UnicodeDecodeError:
+                recv_data = pickle.loads(recv_data_binary)
+            except Exception as e:
+                print(f"[ERROR] {e}")
+                break
+            
+            print(f"[{addr[0]}] {recv_data}")
+            self.broadcast_message(recv_data)
+
+                
+        with self.clients_lock:
+            self.clients[:] = [client for client in self.clients if client["address"] != addr]
+
+        try:
+            conn.close()
         except Exception as e:
             print(f"[ERROR] {e}")
-            break
-        
-        if "PNAME:" in msg:
-            game.add_player(msg.replace('PNAME:',''),conn,addr)
-            print("ADDED PLAYER")
             
-    with clients_lock:
-        # Remove the disconnected client from the clients list
-        clients[:] = [client for client in clients if client["address"] != addr]
+    def start(self):
+        print(f"{self.server_id} Server is starting...")
+        try:
+            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server.bind(self.addr)
+            server.listen(self.max_connection)
+        except:
+            print(f"{self.server_id} Server failed to start. Port {self.port} is currently in use by another process.")
+            return
+        print(f"{self.server_id} Server is listening on {self.ip}:{self.port}")
 
-    try:
-        conn.close()
-    except:
-        pass
-
-game = GameState(1)
-def main():
-    print(f"{SERVER_ID} Server is starting...")
-    try:
-        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.bind(ADDR)
-        server.listen()
-    except:
-        print(f"{SERVER_ID} Server failed to start. Port {PORT} is currently in use by another process.")
-        return
-    print(f"{SERVER_ID} Server is listening on {IP}:{PORT}")
-
-    while len(clients) < game.player_count:
-        conn, addr = server.accept()
-        client_info = {"connection": conn, "address": addr}
-        with clients_lock:
-            clients.append(client_info)
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
-        thread.start()  
+        while len(self.clients) < self.max_connection:
+            conn, addr = server.accept()
+            client_info = {"connection": conn, "address": addr}
+            with self.clients_lock:
+                self.clients.append(client_info)
+            thread = threading.Thread(target=self.handle_client, args=(conn, addr))
+            thread.start()
+            
+        print("END")
         
-    sleep(2)
+    # sleep(2)
     
-    print(f"{SERVER_ID} [GAME] All players have connected to the server")
-    print(f"{SERVER_ID} [GAME] Game is starting...")
-    print(f"{SERVER_ID} [GAME] Players: {game.get_player_names_str()}")
-    broadcast_message("GSET:1")
+    # print(f"{SERVER_ID} [GAME] All players have connected to the server")
+    # print(f"{SERVER_ID} [GAME] Game is starting...")
+    # print(f"{SERVER_ID} [GAME] Players: {game.get_player_names_str()}")
+    # broadcast_message("GSET:1")
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+x = Server()
+x.start()
+input("Enter to start")
+x.broadcast_message("among us")
+x.broadcast_message("sus")
+x.broadcast_message("verb")
+x.broadcast_message("tae")
+x.broadcast_message("random")
+
