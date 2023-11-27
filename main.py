@@ -200,7 +200,9 @@ def main_menu():
                     mechanics_btn_hovered = False
                 SCREEN.blit(create_btn_hover, create_btn_rect)
                 if lmb_clicked:
+                    print("you just clicked create game")
                     game_proper()
+                    
             elif join_btn_rect.collidepoint(mx, my):
                 if not join_btn_hovered:
                     btn_sfx.play()
