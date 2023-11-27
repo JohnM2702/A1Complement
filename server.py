@@ -5,7 +5,7 @@ from time import sleep
 from gamestate import GameState
 
 class Server:
-    def __init__(self, port = 5566, size = 4096, max_connection = 1) -> None:
+    def __init__(self, port = 5566, size = 4096, max_connection = 2) -> None:
         self.ip = socket.gethostbyname(socket.gethostname())
         self.port = port
         self.addr = (self.ip, self.port)

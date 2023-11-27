@@ -8,7 +8,7 @@ import time
 
 class Server:
     def __init__(self, ip = None, port = 5566, size = 4096, max_connection = 5) -> None:
-        self.ip = socket.gethostbyname(socket.gethostname())
+        self.ip = ip
         self.port = port
         self.addr = (self.ip, self.port)
         self.size = size
@@ -75,7 +75,7 @@ class Server:
 
     # client.close()
 
-x = Server()
+x = Server(ip=str(input("IP:")))
 x.start()
 input("Enter to start")
 while True:
