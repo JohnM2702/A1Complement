@@ -83,7 +83,7 @@ class Server:
 
     # client.close()
 
-x = Server()
+x = Server(ip=str(input("IP:")))
 x.start()
 input("Enter to start")
 while True:
