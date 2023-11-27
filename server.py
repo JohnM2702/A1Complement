@@ -6,7 +6,7 @@ from gamestate import GameState
 
 class Server:
     def __init__(self, port = 5566, size = 4096, max_connection = 1) -> None:
-        self.ip = socket.gethostbyname(socket.gethostname())
+        self.ip = "172.16.15.75"
         self.port = port
         self.addr = (self.ip, self.port)
         self.size = size
@@ -30,7 +30,7 @@ class Server:
 
     def handle_client(self, conn, addr):
         
-        CLIENT_ID = (f"[Client {socket.gethostbyaddr(addr[0])[0]} ({addr[0]} @ {addr[1]})]")
+        CLIENT_ID = (f"[Client ({addr[0]} @ {addr[1]})]")
         print(f"{CLIENT_ID}  Estabilished connection to server.")
         
         connected = True
@@ -81,9 +81,7 @@ class Server:
             with self.clients_lock:
                 self.clients.append(client_info)
             thread = threading.Thread(target=self.handle_client, args=(conn, addr))
-            thread.start()
-            
-        print("END")
+            thread.start()  
         
     # sleep(2)
     
@@ -101,4 +99,3 @@ x.broadcast_message("sus")
 x.broadcast_message("verb")
 x.broadcast_message("tae")
 x.broadcast_message("random")
-

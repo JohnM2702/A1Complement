@@ -8,7 +8,7 @@ import time
 
 class Server:
     def __init__(self, ip = None, port = 5566, size = 4096, max_connection = 5) -> None:
-        self.ip = socket.gethostbyname(socket.gethostname())
+        self.ip = ip
         self.port = port
         self.addr = (self.ip, self.port)
         self.size = size
@@ -39,28 +39,36 @@ class Server:
                 print(f"[ERROR] {e}")
                 break
             
-            print(f"{recv_data}")
-            
+            print("\nServer broadcast: "+f"{recv_data}"+"\n")      
     
     def start(self, pname = None):
         pname = "PNAME:" + str(input("Player Name: "))
         
-        # Client initialization
-        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client.connect(self.addr)
-        print(f"[THIS CLIENT] Connected to server at {self.ip}:{self.port}")
+        #add input validation
+        self.ip = input("Enter server IP: ")
+        self.port = int(input("Enter server port: "))
 
-        # Handle server incoming msg
-        receive_thread = threading.Thread(target=self.receive_messages, args=(self.client,))
-        receive_thread.start()
-        
-        # Send player information
         try:
-            self.client.send(pname.encode(self.format))
-        except Exception as e:
-            print(f"[ERROR] {e}")
-                
+            # Client initialization
+            self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+            self.addr = (self.ip, self.port)
+            self.client.connect(self.addr)
+            print(f"[THIS CLIENT] Connected to server at {self.ip}:{self.port}")
+
+            # Handle server incoming msg
+            receive_thread = threading.Thread(target=self.receive_messages, args=(self.client,))
+            receive_thread.start()
             
+            # Send player information
+            try:
+                self.client.send((pname+" - "+self.ip+":"+str(self.port)).encode(self.format))
+            except Exception as e:
+                print(f"[ERROR] {e}")
+        
+        except:
+            print("Error connecting to the server. Try again.")
+                           
     def send_message(self, message):
         try:
             if isinstance(message, str):
