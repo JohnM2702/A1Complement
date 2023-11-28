@@ -16,6 +16,7 @@ BEIGE = '#E1D4BB'
 # Fonts
 font = pygame.font.Font(os.path.join('fonts','InriaSans-Regular.ttf'),20)
 font_italic = pygame.font.Font(os.path.join('fonts','InriaSans-Italic.ttf'),20)
+font_italic_big = pygame.font.Font(os.path.join('fonts','InriaSans-Italic.ttf'),40)
 name_font = pygame.font.Font(os.path.join('fonts','Lalezar-Regular.ttf'),30)
 answer_font = pygame.font.Font(os.path.join('fonts','Lalezar-Regular.ttf'),50)
 
@@ -47,12 +48,18 @@ join_btn = pygame.image.load(os.path.join('assets','join.png')).convert_alpha()
 join_btn_hover = pygame.image.load(os.path.join('assets','join_hover.png')).convert_alpha()
 join_btn_rect = join_btn.get_rect(topleft = (355,525))
 
+loading0_icon = pygame.image.load(os.path.join('assets','loading_0.png')).convert_alpha()
+loading1_icon = pygame.image.load(os.path.join('assets','loading_1.png')).convert_alpha()
+
 mechanics_btn = pygame.image.load(os.path.join('assets','mechanics.png')).convert_alpha()
 mechanics_btn_hover = pygame.image.load(os.path.join('assets','mechanics_hover.png')).convert_alpha()
 mechanics_btn_rect = mechanics_btn.get_rect(topleft = (355,633))
 
 mechanics_bg = pygame.image.load(os.path.join('assets','mechanics_bg.png')).convert_alpha()
 mechanics_bg_rect = mechanics_bg.get_rect(topleft=(26,35))
+
+loading_bg = pygame.image.load(os.path.join('assets','loading.png')).convert_alpha()
+loading_bg_rect = mechanics_bg.get_rect(topleft=(269,384))
 
 question_box = pygame.image.load(os.path.join('assets','question_box.png')).convert_alpha()
 answer_box = pygame.image.load(os.path.join('assets','answer_box.png')).convert_alpha()
@@ -83,6 +90,66 @@ def mechanics():
         SCREEN.blit(menu_bg,(0,bg_y-bg_height+6))
         SCREEN.blit(mechanics_bg,mechanics_bg_rect)
         SCREEN.blit(logo,logo_rect)
+        
+        pygame.display.update()
+        clock.tick(FPS)
+
+
+#clock = pygame.time.Clock()
+#refresh_rate = 500  # Refresh every half second (in milliseconds)
+#last_refresh_time = pygame.time.get_ticks()
+
+def loading():
+    running = True
+    loading_array = [0,0,0,0,0]
+    refresh_count = 0
+    while running:
+        refresh_count += 1
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+            if event.type == bg_timer:
+                update_bg()
+
+        SCREEN.fill((BEIGE))
+        SCREEN.blit(menu_bg,(0,bg_y))
+        SCREEN.blit(menu_bg,(0,bg_y-bg_height+6))
+        SCREEN.blit(loading_bg,loading_bg_rect)
+        SCREEN.blit(logo,logo_rect)
+
+        waiting_label = font_italic_big.render('Loading Into Game',1,'Black')
+        SCREEN.blit(waiting_label,(347,419))
+
+        player_count = 0
+        max_players = 4
+
+        player_count_text = "{}/{}".format(player_count, max_players)
+        player_count = font_italic_big.render(player_count_text,1,'Black')
+        SCREEN.blit(player_count,(477,492))
+
+        
+        for i in range(0,len(loading_array)):
+            selected_icon = ""
+            if loading_array[i] == 0:
+                selected_icon = loading0_icon
+            else:
+                selected_icon = loading1_icon
+            SCREEN.blit(selected_icon,(358+(67*i),576))
+
+        if refresh_count % 50 == 0:
+            if all(loading_array):
+                for i in range(0,len(loading_array)):
+                    loading_array[i] = 0
+            else:
+                for i in range(0,len(loading_array)):
+                    if loading_array[i] == 0:
+                        loading_array[i] = 1
+                        break
+            if refresh_count == 300:
+                refresh_count = 0
         
         pygame.display.update()
         clock.tick(FPS)
@@ -210,6 +277,8 @@ def main_menu():
                     create_btn_hovered = False
                     mechanics_btn_hovered = False
                 SCREEN.blit(join_btn_hover, join_btn_rect)
+                if lmb_clicked:
+                    loading()  # Display mechanics
             elif mechanics_btn_rect.collidepoint(mx, my):
                 if not mechanics_btn_hovered:
                     btn_sfx.play()
