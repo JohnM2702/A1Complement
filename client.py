@@ -6,9 +6,9 @@ from time import sleep
 from gamestate import GameState
 import time
 
-class Server:
+class Client:
     def __init__(self, ip = None, port = 5566, size = 4096, max_connection = 5) -> None:
-        self.ip = ip
+        self.ip = self.get_ip()
         self.port = port
         self.addr = (self.ip, self.port)
         self.size = size
@@ -16,30 +16,6 @@ class Server:
         self.client_id = (f"[Server {socket.gethostname()} ({self.ip}:{self.port})]")
         
         self.client = None
-
-    def receive_messages(self, client_socket):
-        while True:
-            try:
-                recv_data_binary = client_socket.recv(self.size)
-            except ConnectionAbortedError:
-                print(f"Disconnected from server")
-                break
-            except ConnectionResetError:
-                print(f"[ERROR] Server closed unexpectedly. Check server status.")
-                break
-            except Exception as e:
-                print(f"[ERROR] {e}")
-                break
-                
-            try:
-                recv_data = recv_data_binary.decode()
-            except UnicodeDecodeError:
-                recv_data = pickle.loads(recv_data_binary)
-            except Exception as e:
-                print(f"[ERROR] {e}")
-                break
-            
-            print("\nServer broadcast: "+f"{recv_data}"+"\n")      
     
     def start(self, pname = None):
         pname = "PNAME:" + str(input("Player Name: "))
@@ -68,7 +44,7 @@ class Server:
         
         except:
             print("Error connecting to the server. Try again.")
-                           
+
     def send_message(self, message):
         try:
             if isinstance(message, str):
@@ -78,12 +54,47 @@ class Server:
             self.client.send(data)
         except Exception as e:
             print(f"[ERROR] {e}")
-        
+          
+    def receive_messages(self, client_socket):
+        while True:
+            try:
+                recv_data_binary = client_socket.recv(self.size)
+            except ConnectionAbortedError:
+                print(f"Disconnected from server")
+                break
+            except ConnectionResetError:
+                print(f"[ERROR] Server closed unexpectedly. Check server status.")
+                break
+            except Exception as e:
+                print(f"[ERROR] {e}")
+                break
+                
+            try:
+                recv_data = recv_data_binary.decode()
+            except UnicodeDecodeError:
+                recv_data = pickle.loads(recv_data_binary)
+            except Exception as e:
+                print(f"[ERROR] {e}")
+                break
+            
+            print("\nServer broadcast: "+f"{recv_data}"+"\n")      
+           
+    def get_ip():
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(('10.255.255.255', 1))
+            IP = s.getsockname()[0]
+        except:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP
+    
 
 
     # client.close()
 
-x = Server(ip=str(input("IP:")))
+x = Client(ip=str(input("IP:")))
 x.start()
 input("Enter to start")
 while True:

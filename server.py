@@ -6,7 +6,7 @@ from gamestate import GameState
 
 class Server:
     def __init__(self, port = 5566, size = 4096, max_connection = 1) -> None:
-        self.ip = "172.16.15.75"
+        self.ip = self.get_ip()
         self.port = port
         self.addr = (self.ip, self.port)
         self.size = size
@@ -16,6 +16,25 @@ class Server:
         
         self.clients = []
         self.clients_lock = threading.Lock()
+
+    def start(self):
+        print(f"{self.server_id} Server is starting...")
+        try:
+            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server.bind(self.addr)
+            server.listen(self.max_connection)
+        except:
+            print(f"{self.server_id} Server failed to start. Port {self.port} is currently in use by another process.")
+            return
+        print(f"{self.server_id} Server is listening on {self.ip}:{self.port}")
+
+        while len(self.clients) < self.max_connection:
+            conn, addr = server.accept()
+            client_info = {"connection": conn, "address": addr}
+            with self.clients_lock:
+                self.clients.append(client_info)
+            thread = threading.Thread(target=self.handle_client, args=(conn, addr))
+            thread.start()  
 
     def broadcast_message(self, message):
         for client in self.clients:
@@ -62,33 +81,70 @@ class Server:
         try:
             conn.close()
         except Exception as e:
-            print(f"[ERROR] {e}")
-            
-    def start(self):
-        print(f"{self.server_id} Server is starting...")
-        try:
-            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server.bind(self.addr)
-            server.listen(self.max_connection)
-        except:
-            print(f"{self.server_id} Server failed to start. Port {self.port} is currently in use by another process.")
-            return
-        print(f"{self.server_id} Server is listening on {self.ip}:{self.port}")
+            print(f"[ERROR] {e}")       
 
-        while len(self.clients) < self.max_connection:
-            conn, addr = server.accept()
-            client_info = {"connection": conn, "address": addr}
-            with self.clients_lock:
-                self.clients.append(client_info)
-            thread = threading.Thread(target=self.handle_client, args=(conn, addr))
-            thread.start()  
-        
+    def get_ip():
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(('10.255.255.255', 1))
+            IP = s.getsockname()[0]
+        except:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP
+    
+
     # sleep(2)
     
     # print(f"{SERVER_ID} [GAME] All players have connected to the server")
     # print(f"{SERVER_ID} [GAME] Game is starting...")
     # print(f"{SERVER_ID} [GAME] Players: {game.get_player_names_str()}")
     # broadcast_message("GSET:1")
+
+class QuestionAnswerContainer:
+    def __init__(self) -> None:
+        self.qna_list = []
+
+    def add_qna(self, new_qna:dict):
+        """        
+        {
+            "q": "question/trivia",
+            "a": "answer"
+        }
+        """
+        self.qna_list.append(new_qna)
+
+    def write_to_file(self):
+        pickle_file = open('pickled_qna', 'ab')
+        
+        pickle.dump(self.qna_list, pickle_file)   
+
+        pickle_file.close()
+
+    def read_from_file(self):
+        pickle_file = open('pickled_qna', 'rb')    
+
+        extracted_qna_list = pickle.load(pickle_file)
+        self.qna_list = extracted_qna_list
+
+        pickle_file.close()
+
+     
+    """
+    def qna_list_dump(self):
+        pass
+        #- prints all qna and its corresponding index
+
+    def remove_qna(self, index:int):
+        pass
+        #- remove qna item
+
+    def edit_qna(self, index:int):
+        pass
+        # - editing qna
+        # - either question or answer
+    """
 
 # if __name__ == "__main__":
 x = Server()
