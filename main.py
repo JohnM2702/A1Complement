@@ -123,7 +123,11 @@ def loading():
         waiting_label = font_italic_big.render('Loading Into Game',1,'Black')
         SCREEN.blit(waiting_label,(347,419))
 
-        player_count = font_italic_big.render('0/2',1,'Black')
+        player_count = 0
+        max_players = 4
+
+        player_count_text = "{}/{}".format(player_count, max_players)
+        player_count = font_italic_big.render(player_count_text,1,'Black')
         SCREEN.blit(player_count,(477,492))
 
         
@@ -146,9 +150,6 @@ def loading():
                         break
             if refresh_count == 300:
                 refresh_count = 0
-
-        print(refresh_count)
-            
         
         pygame.display.update()
         clock.tick(FPS)
