@@ -95,14 +95,6 @@ class Server:
         finally:
             s.close()
         return IP
-    
-
-    # sleep(2)
-    
-    # print(f"{SERVER_ID} [GAME] All players have connected to the server")
-    # print(f"{SERVER_ID} [GAME] Game is starting...")
-    # print(f"{SERVER_ID} [GAME] Players: {game.get_player_names_str()}")
-    # broadcast_message("GSET:1")
 
 class QuestionAnswerContainer:
     def __init__(self) -> None:
@@ -132,7 +124,6 @@ class QuestionAnswerContainer:
 
         pickle_file.close()
 
-     
     def qna_list_dump(self):
         #- prints all qna and its corresponding index
         for index in range(len(self.qna_list)):
