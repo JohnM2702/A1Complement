@@ -136,73 +136,25 @@ class QuestionAnswerContainer:
     def get_random_qna(self, number=1):
         if number > len(self.qna_list):
             print("Warning: The requested number is greater than the number of available Q&A pairs.")
+            random.shuffle(self.qna_list)
             return self.qna_list
 
         random_qna_list = random.sample(self.qna_list, number)
         return random_qna_list
-    
-def clear_terminal():
-    system = platform.system()
-    if system == "Windows":
-        os.system("cls")
-    else:
-        os.system("clear")
-    
-def main_menu_options():
-    to_return = -1
-    while to_return not in ['0', '1', '2']:
-        clear_terminal()
-        print(f"[1] Start Game Server")
-        print(f"[2] Open QuestionAnswerContainter")
-        print(f"[0] Quit")
-        print("\n\n")
-    
-        to_return = input("> ")
-    return to_return
-        
-    
-
-
-def qna_handle(qna_obj:QuestionAnswerContainer):
-    while True:
-        print("QuestionAnswerContainter:")
-        print("1 - Add Q&A")
-        print("2 - Show Q&As")
-        print("3 - Back")
-
-        choice = input("Enter your choice: ")
-
-        if choice == '1':
-            qna_obj.add_qna()
-        elif choice == '2':
-            qna_obj.qna_list_dump()
-        elif choice == '3':
-            print("Exit")
-            break
-        else:
-            clear_terminal()
-            print("Invalid choice. Please enter a valid option.")
 
             
-            
-def main():
-    server_obj = Server()
+def main(max_players=4):
+    server_obj = Server(max_connection=max_players)
     qna_obj = QuestionAnswerContainer()
     qna_obj.read_from_file()
+    server_obj.start()
     
-    choice = main_menu_options()
-    match choice:
-        case '1': # Start Game Server
-            clear_terminal()
-            print("Start Game Server")
-        case '2': # Open QuestionAnswerContainter
-            clear_terminal()
-            print("Open QuestionAnswerContainter")
-            qna_handle(qna_obj)
-        case '0': # Quit
-            pass   
-        case _:
-            print("Invalid choice. Please enter a valid option.")
+    
+    
+    
+    
+import sys
+
 
 if __name__ == "__main__":
-    main()
+    main(max_players=sys.argv[1])

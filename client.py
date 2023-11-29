@@ -7,7 +7,7 @@ from gamestate import GameState
 import time
 
 class Client:
-    def __init__(self, ip = None, port = 5566, size = 4096, max_connection = 5) -> None:
+    def __init__(self, ip = None, port = 5566, size = 4096, name = "Juan") -> None:
         self.ip = self.get_ip()
         self.port = port
         self.addr = (self.ip, self.port)
@@ -16,14 +16,10 @@ class Client:
         self.client_id = (f"[Server {socket.gethostname()} ({self.ip}:{self.port})]")
         
         self.client = None
-    
-    def start(self, pname = None):
-        pname = "PNAME:" + str(input("Player Name: "))
         
-        #add input validation
-        self.ip = input("Enter server IP: ")
-        self.port = int(input("Enter server port: "))
-
+        self.name = name
+    
+    def start(self):
         try:
             # Client initialization
             self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -38,7 +34,7 @@ class Client:
             
             # Send player information
             try:
-                self.client.send((pname+" - "+self.ip+":"+str(self.port)).encode(self.format))
+                self.client.send((self.name+" - "+self.ip+":"+str(self.port)).encode(self.format))
             except Exception as e:
                 print(f"[ERROR] {e}")
         
@@ -94,8 +90,11 @@ class Client:
 
     # client.close()
 
-x = Client(ip=str(input("IP:")))
-x.start()
-input("Enter to start")
-while True:
-    x.send_message(input("> "))
+def main(server_ip="192.168.1.1", player_name="Juan"):
+    client_obj = Client(ip=server_ip, name=player_name)
+    
+import sys
+
+
+if __name__ == "__main__":
+    main(server_ip=sys.argv[1], player_name=sys.argv[2])
