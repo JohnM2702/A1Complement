@@ -5,6 +5,7 @@ import pickle
 import threading
 from time import sleep
 from gamestate import GameState
+import random
 
 class Server:
     def __init__(self, port = 5566, size = 4096, max_connection = 1) -> None:
@@ -131,16 +132,14 @@ class QuestionAnswerContainer:
             print("q: " + str(self.qna_list[index]["q"]))
             print("a: " + str(self.qna_list[index]["a"]))
             print()
-    """
-    def remove_qna(self, index:int):
-        pass
-        #- remove qna item
+            
+    def get_random_qna(self, number=1):
+        if number > len(self.qna_list):
+            print("Warning: The requested number is greater than the number of available Q&A pairs.")
+            return self.qna_list
 
-    def edit_qna(self, index:int):
-        pass
-        # - editing qna
-        # - either question or answer
-    """
+        random_qna_list = random.sample(self.qna_list, number)
+        return random_qna_list
     
 def clear_terminal():
     system = platform.system()
@@ -204,8 +203,6 @@ def main():
             pass   
         case _:
             print("Invalid choice. Please enter a valid option.")
-            
-
 
 if __name__ == "__main__":
     main()
