@@ -59,10 +59,13 @@ mechanics_bg = pygame.image.load(os.path.join('assets','mechanics_bg.png')).conv
 mechanics_bg_rect = mechanics_bg.get_rect(topleft=(26,35))
 
 number_two = pygame.image.load(os.path.join('assets','number_two.png')).convert_alpha()
+number_two_hover = pygame.image.load(os.path.join('assets','number_two_hover.png')).convert_alpha()
 number_two_rect = number_two.get_rect(topleft=(301,522))
 number_four = pygame.image.load(os.path.join('assets','number_four.png')).convert_alpha()
+number_four_hover = pygame.image.load(os.path.join('assets','number_four_hover.png')).convert_alpha()
 number_four_rect = number_four.get_rect(topleft=(599,522))
 number_three = pygame.image.load(os.path.join('assets','number_three.png')).convert_alpha()
+number_three_hover = pygame.image.load(os.path.join('assets','number_three_hover.png')).convert_alpha()
 number_three_rect = number_three.get_rect(topleft=(447,522))
 
 loading_bg = pygame.image.load(os.path.join('assets','loading.png')).convert_alpha()
@@ -150,7 +153,7 @@ def define_player_window():
                     create_btn_hovered = True
                     join_btn_hovered = False
                     mechanics_btn_hovered = False
-                #SCREEN.blit(create_btn_hover, create_btn_rect)
+                SCREEN.blit(number_two_hover, number_two_rect)
                 if lmb_clicked:
                     loading(2)
             elif number_three_rect.collidepoint(mx, my):
@@ -159,7 +162,7 @@ def define_player_window():
                     join_btn_hovered = True
                     create_btn_hovered = False
                     mechanics_btn_hovered = False
-                #SCREEN.blit(join_btn_hover, join_btn_rect)
+                SCREEN.blit(number_three_hover, number_three_rect)
                 if lmb_clicked:
                     loading(3)
             elif number_four_rect.collidepoint(mx, my):
@@ -168,7 +171,7 @@ def define_player_window():
                     mechanics_btn_hovered = True
                     create_btn_hovered = False
                     join_btn_hovered = False
-                #SCREEN.blit(mechanics_btn_hover, mechanics_btn_rect)
+                SCREEN.blit(number_four_hover, number_four_rect)
                 if lmb_clicked:
                     loading(4)
             else: 
