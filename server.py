@@ -6,9 +6,10 @@ import threading
 from time import sleep
 from gamestate import GameState
 import random
+import sys
 
 class Server:
-    def __init__(self, port = 5566, size = 4096, max_connection = 1) -> None:
+    def __init__(self, port = 5566, size = 4096, max_connection = 4) -> None:
         self.ip = self.get_ip()
         self.port = port
         self.addr = (self.ip, self.port)
@@ -142,33 +143,13 @@ class QuestionAnswerContainer:
 
         random_qna_list = random.sample(self.qna_list, number)
         return random_qna_list
-      
-
-def qna_handle(qna_obj:QuestionAnswerContainer):
-    while True:
-        print("QuestionAnswerContainter:")
-        print("1 - Add Q&A")
-        print("2 - Show Q&As")
-        print("3 - Back")
-
-        choice = input("Enter your choice: ")
-
-        if choice == '1':
-            qna_obj.add_qna()
-        elif choice == '2':
-            qna_obj.qna_list_dump()
-        elif choice == '3':
-            print("Exit")
-            break
-        else:
-            clear_terminal()
-            print("Invalid choice. Please enter a valid option.")
 
             
-            
-def main():
-    server_obj = Server()
+def main(max_players=4):
+    server_obj = Server(max_connection=max_players)
     qna_obj = QuestionAnswerContainer()
+    qna_obj.read_from_file()
+    server_obj.start()
 
 if __name__ == "__main__":
-    main()
+    main(max_players=sys.argv[1])
