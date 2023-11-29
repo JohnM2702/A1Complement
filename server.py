@@ -1,3 +1,5 @@
+import os
+import platform
 import socket
 import pickle
 import threading
@@ -83,7 +85,7 @@ class Server:
         except Exception as e:
             print(f"[ERROR] {e}")       
 
-    def get_ip():
+    def get_ip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             s.connect(('10.255.255.255', 1))
@@ -131,11 +133,14 @@ class QuestionAnswerContainer:
         pickle_file.close()
 
      
-    """
     def qna_list_dump(self):
-        pass
         #- prints all qna and its corresponding index
-
+        for index in range(len(self.qna_list)):
+            print(f"{index}")
+            print("q: " + str(self.qna_list[index]["q"]))
+            print("a: " + str(self.qna_list[index]["a"]))
+            print()
+    """
     def remove_qna(self, index:int):
         pass
         #- remove qna item
@@ -145,13 +150,71 @@ class QuestionAnswerContainer:
         # - editing qna
         # - either question or answer
     """
+    
+def clear_terminal():
+    system = platform.system()
+    if system == "Windows":
+        os.system("cls")
+    else:
+        os.system("clear")
+    
+def main_menu_options():
+    to_return = -1
+    while to_return not in ['0', '1', '2']:
+        clear_terminal()
+        print(f"[1] Start Game Server")
+        print(f"[2] Open QuestionAnswerContainter")
+        print(f"[0] Quit")
+        print("\n\n")
+    
+        to_return = input("> ")
+    return to_return
+        
+    
 
-# if __name__ == "__main__":
-x = Server()
-x.start()
-input("Enter to start")
-x.broadcast_message("among us")
-x.broadcast_message("sus")
-x.broadcast_message("verb")
-x.broadcast_message("tae")
-x.broadcast_message("random")
+
+def qna_handle(qna_obj:QuestionAnswerContainer):
+    while True:
+        print("QuestionAnswerContainter:")
+        print("1 - Add Q&A")
+        print("2 - Show Q&As")
+        print("3 - Back")
+
+        choice = input("Enter your choice: ")
+
+        if choice == '1':
+            qna_obj.add_qna()
+        elif choice == '2':
+            qna_obj.qna_list_dump()
+        elif choice == '3':
+            print("Exit")
+            break
+        else:
+            clear_terminal()
+            print("Invalid choice. Please enter a valid option.")
+
+            
+            
+def main():
+    server_obj = Server()
+    qna_obj = QuestionAnswerContainer()
+    qna_obj.read_from_file()
+    
+    choice = main_menu_options()
+    match choice:
+        case '1': # Start Game Server
+            clear_terminal()
+            print("Start Game Server")
+        case '2': # Open QuestionAnswerContainter
+            clear_terminal()
+            print("Open QuestionAnswerContainter")
+            qna_handle(qna_obj)
+        case '0': # Quit
+            pass   
+        case _:
+            print("Invalid choice. Please enter a valid option.")
+            
+
+
+if __name__ == "__main__":
+    main()
