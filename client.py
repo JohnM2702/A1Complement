@@ -6,7 +6,12 @@ from time import sleep
 from gamestate import GameState
 import time
 
+player_size_data = 0
+
+server_message_received = threading.Event()
+
 class Client:
+    
     def __init__(self, ip = None, port = 5566, size = 4096, name = "Juan") -> None:
         self.ip = self.get_ip()
         self.port = port
@@ -52,6 +57,7 @@ class Client:
             print(f"[ERROR] {e}")
           
     def receive_messages(self, client_socket):
+        global player_size_data
         while True:
             try:
                 recv_data_binary = client_socket.recv(self.size)
@@ -73,7 +79,13 @@ class Client:
                 print(f"[ERROR] {e}")
                 break
             
-            print("\nServer broadcast: "+f"{recv_data}"+"\n")      
+            print("\nServer broadcast: "+f"{recv_data}"+"\n")
+            
+            if recv_data[0].isdigit():
+                print("AYO",recv_data,player_size_data)
+                player_size_data = recv_data.split(",")
+                #player_size = int(recv_data)
+                #print(f"Player size: {player_size}")
            
     def get_ip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -88,10 +100,22 @@ class Client:
 
     # client.close()
 
+client_ref = None
+
+def get_server_size():
+    global player_size_data
+    return player_size_data
+
+def client_message(message):
+    global client_ref
+    client_ref.send_message(message)
+
 def client_start(server_ip="192.168.1.1", player_name="Juan"):
+    global client_ref
     client_obj = Client(ip=server_ip, name=player_name)
+    client_ref = client_obj
     client_obj.start()
-    client_obj.send_message('yeet')
+    #client_obj.send_message('yeet')
     
 import sys
 

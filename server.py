@@ -23,8 +23,21 @@ class Server:
         self.clients = []
         self.clients_lock = threading.Lock()
 
+    def send_to_client(self, conn, message):
+        try:
+            if isinstance(message, str):
+                data = message.encode(self.format)
+            else:
+                data = pickle.dumps(message)
+            conn.sendall(data)
+        except Exception as e:
+            print(f"[ERROR] {e}")
+
     def player_size(self):
-        return len(self.clients)
+        return str(len(self.clients))
+
+    def get_max_connection(self):
+        return self.max_connection
 
     def debug_clients(self):
         print(self.clients)
@@ -85,7 +98,14 @@ class Server:
                 break
             
             print(f"[{addr[0]}] {recv_data}")
-            print(self.debug_clients())
+
+            if "><" in recv_data:
+                recv_data = recv_data[recv_data.index("><")+2:]
+                print(recv_data)
+            if recv_data == "get_player_size":
+                return_message = str(self.player_size()) +"," + str(self.get_max_connection())
+                self.send_to_client(conn, return_message)
+                print("<<< Sending size", return_message)
             self.broadcast_message(recv_data)
 
                 
