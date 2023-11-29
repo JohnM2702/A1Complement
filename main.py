@@ -104,11 +104,7 @@ def mechanics():
         
         pygame.display.update()
         clock.tick(FPS)
-
-
-#clock = pygame.time.Clock()
-#refresh_rate = 500  # Refresh every half second (in milliseconds)
-#last_refresh_time = pygame.time.get_ticks()
+        
 
 def define_player_window():
     field_clicked = False
