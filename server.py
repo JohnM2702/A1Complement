@@ -8,6 +8,8 @@ from gamestate import GameState
 import random
 import sys
 
+server_ref = None
+
 class Server:
     def __init__(self, port = 5566, size = 4096, max_connection = 4) -> None:
         self.ip = self.get_ip()
@@ -20,6 +22,13 @@ class Server:
         
         self.clients = []
         self.clients_lock = threading.Lock()
+
+    def player_size(self):
+        return len(self.clients)
+
+    def debug_clients(self):
+        print(self.clients)
+        print("Length:",len(self.clients))
 
     def start(self):
         print(f"{self.server_id} Server is starting...")
@@ -76,6 +85,7 @@ class Server:
                 break
             
             print(f"[{addr[0]}] {recv_data}")
+            print(self.debug_clients())
             self.broadcast_message(recv_data)
 
                 
@@ -144,12 +154,27 @@ class QuestionAnswerContainer:
         random_qna_list = random.sample(self.qna_list, number)
         return random_qna_list
 
-            
-def main(max_players=4):
+def get_server():
+    global server_ref
+    size = server_ref.player_size()
+    return size
+
+def set_server_ref(obj):
+    global server_ref
+    server_ref = obj
+
+def server_start(max_players=4):
+    global server_ref
     server_obj = Server(max_connection=max_players)
-    qna_obj = QuestionAnswerContainer()
-    qna_obj.read_from_file()
+    server_ref = server_obj
+    #set_server_ref(server_obj)
+    # testing connection first before game, will uncomment after    #qna_obj = QuestionAnswerContainer()
+    #qna_obj.read_from_file()
+    
     server_obj.start()
 
+    
+"""
 if __name__ == "__main__":
-    main(max_players=sys.argv[1])
+    #main(max_players=sys.argv[1])
+    main(max_players=4)"""

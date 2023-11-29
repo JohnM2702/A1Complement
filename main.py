@@ -1,6 +1,12 @@
 import pygame, os
 from sys import exit 
 from pygame_textinput import *
+import subprocess
+import threading
+
+# borrowing functions in server and clients
+from server import Server, server_start, get_server
+from client import client_start
 
 pygame.init()
 FPS = 60
@@ -83,6 +89,12 @@ bg_timer = pygame.USEREVENT + 1
 pygame.time.set_timer(bg_timer,50)
 
 
+def run_server():
+    subprocess.run(['python','server.py'])
+
+def run_client():
+    subprocess.run(['python','client.py'])
+
 def mechanics():
     running = True 
     while running:
@@ -140,7 +152,7 @@ def define_player_window():
         SCREEN.blit(number_four,number_four_rect)
 
         mx, my = pygame.mouse.get_pos()
-        
+        max_player_size = 4
         # Handle button hover & sfx
         if not field_clicked:
             if number_two_rect.collidepoint(mx, my):
@@ -151,7 +163,8 @@ def define_player_window():
                     mechanics_btn_hovered = False
                 SCREEN.blit(number_two_hover, number_two_rect)
                 if lmb_clicked:
-                    loading(2)
+                    max_player_size = 2
+                    loading(max_player_size)
             elif number_three_rect.collidepoint(mx, my):
                 if not join_btn_hovered:
                     btn_sfx.play()
@@ -160,7 +173,8 @@ def define_player_window():
                     mechanics_btn_hovered = False
                 SCREEN.blit(number_three_hover, number_three_rect)
                 if lmb_clicked:
-                    loading(3)
+                    max_player_size = 3
+                    loading(max_player_size)
             elif number_four_rect.collidepoint(mx, my):
                 if not mechanics_btn_hovered:
                     btn_sfx.play()
@@ -169,7 +183,8 @@ def define_player_window():
                     join_btn_hovered = False
                 SCREEN.blit(number_four_hover, number_four_rect)
                 if lmb_clicked:
-                    loading(4)
+                    max_player_size = 4
+                    loading(max_player_size)
             else: 
                 field_clicked = False
                 mechanics_btn_hovered = False
@@ -184,6 +199,11 @@ def loading(max_players):
     running = True
     loading_array = [0,0,0,0,0]
     refresh_count = 0
+
+    # this is for setting up the shit
+    server_start_thread = threading.Thread(target=server_start, args=(max_players,))
+    server_start_thread.start()
+    client_start()
     while running:
         refresh_count += 1
         for event in pygame.event.get():
@@ -209,7 +229,7 @@ def loading(max_players):
         waiting_label = font_italic_big.render(loading_label,1,'Black')
         SCREEN.blit(waiting_label,(347,419))
 
-        player_count = 0
+        player_count = get_server()
 
         player_count_text = "{}/{}".format(player_count, max_players)
         player_count = font_italic_big.render(player_count_text,1,'Black')
@@ -355,7 +375,8 @@ def main_menu():
                 SCREEN.blit(create_btn_hover, create_btn_rect)
                 if lmb_clicked:
                     print("you just clicked create game")
-                    game_proper()
+                    #game_proper()
+                    define_player_window()
                     
             elif join_btn_rect.collidepoint(mx, my):
                 if not join_btn_hovered:
@@ -366,7 +387,6 @@ def main_menu():
                 SCREEN.blit(join_btn_hover, join_btn_rect)
                 if lmb_clicked:
                     define_player_window()
-                    # loading()  # Display loading
             elif mechanics_btn_rect.collidepoint(mx, my):
                 if not mechanics_btn_hovered:
                     btn_sfx.play()

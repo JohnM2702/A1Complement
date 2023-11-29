@@ -75,7 +75,7 @@ class Client:
             
             print("\nServer broadcast: "+f"{recv_data}"+"\n")      
            
-    def get_ip():
+    def get_ip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             s.connect(('10.255.255.255', 1))
@@ -85,16 +85,17 @@ class Client:
         finally:
             s.close()
         return IP
-    
-
 
     # client.close()
 
-def main(server_ip="192.168.1.1", player_name="Juan"):
+def client_start(server_ip="192.168.1.1", player_name="Juan"):
     client_obj = Client(ip=server_ip, name=player_name)
+    client_obj.start()
+    client_obj.send_message('yeet')
     
 import sys
 
-
+"""
 if __name__ == "__main__":
-    main(server_ip=sys.argv[1], player_name=sys.argv[2])
+    #main(server_ip=sys.argv[1], player_name=sys.argv[2])
+    main()"""
