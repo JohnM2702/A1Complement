@@ -8,7 +8,7 @@ from gamestate import GameState
 import random
 
 class Server:
-    def __init__(self, port = 5566, size = 4096, max_connection = 1) -> None:
+    def __init__(self, port = 5566, size = 4096, max_connection = 4) -> None:
         self.ip = self.get_ip()
         self.port = port
         self.addr = (self.ip, self.port)
