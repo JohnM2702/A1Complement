@@ -6,6 +6,7 @@ import threading
 from time import sleep
 from gamestate import GameState
 import random
+import sys
 
 class Server:
     def __init__(self, port = 5566, size = 4096, max_connection = 4) -> None:
@@ -149,12 +150,6 @@ def main(max_players=4):
     qna_obj.read_from_file()
     server_obj.start()
     
-    
-    
-    
-    
-import sys
-
 
 if __name__ == "__main__":
     main(max_players=sys.argv[1])
