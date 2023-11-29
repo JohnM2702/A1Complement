@@ -140,6 +140,7 @@ class QuestionAnswerContainer:
             random.shuffle(self.qna_list)
             return self.qna_list
 
+
         random_qna_list = random.sample(self.qna_list, number)
         return random_qna_list
 
@@ -149,7 +150,6 @@ def main(max_players=4):
     qna_obj = QuestionAnswerContainer()
     qna_obj.read_from_file()
     server_obj.start()
-    
 
 if __name__ == "__main__":
     main(max_players=sys.argv[1])
