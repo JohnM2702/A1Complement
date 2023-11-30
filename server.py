@@ -101,7 +101,6 @@ class Server:
 
             if "><" in recv_data:
                 recv_data = recv_data[recv_data.index("><")+2:]
-                print(recv_data)
             if recv_data == "get_player_size":
                 return_message = str(self.player_size()) +"," + str(self.get_max_connection())
                 self.send_to_client(conn, return_message)

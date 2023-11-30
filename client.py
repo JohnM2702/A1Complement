@@ -85,10 +85,7 @@ class Client:
             print("\nServer broadcast: "+f"{recv_data}"+"\n")
             
             if recv_data[0].isdigit():
-                print("AYO",recv_data,player_size_data)
                 player_size_data = recv_data.split(",")
-                #player_size = int(recv_data)
-                #print(f"Player size: {player_size}")
            
     def get_ip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

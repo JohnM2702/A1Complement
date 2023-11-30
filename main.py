@@ -580,5 +580,6 @@ def player_name():
         pygame.display.update()
         clock.tick(FPS)
 
-player_name()       
-#main_menu()
+
+# starting window sobberns
+player_name()
