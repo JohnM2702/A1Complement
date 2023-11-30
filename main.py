@@ -295,31 +295,34 @@ def loading_client():
         SCREEN.blit(loading_bg,loading_bg_rect)
         SCREEN.blit(logo,logo_rect)
 
-        if loading_state == 1:
-            a = 'Making the Game'
-        elif loading_state == 0:
-            a = 'Searching for Game'
-        
+        """
         while player_count_value == 0:
             client_message("><get_player_size")
             player_count_value = get_server_size()
             
             if player_count_value != 0:
                 break
+        """
 
-            time.sleep(3)
+        if loading_state == 1 and player_count_value != 0:
+            a = 'Making the Game'
 
-        if player_count_value[0] == player_count_value[1]:
-            game_proper()
+            player_count_text = "{}/{}".format(player_count_value[0], player_count_value[1])
+            player_count = font_italic_big.render(player_count_text,1,'Black')
+            SCREEN.blit(player_count,(477,492))
+
+            if player_count_value[0] == player_count_value[1]:
+                game_proper()
+            
+        else:
+            a = 'Searching for Game'
+
+        
         loading_label = "{}".format(a)
         waiting_label = font_italic_big.render(loading_label,1,'Black')
         SCREEN.blit(waiting_label,(347,419))
 
-        player_count_text = "{}/{}".format(player_count_value[0], player_count_value[1])
-        player_count = font_italic_big.render(player_count_text,1,'Black')
-        SCREEN.blit(player_count,(477,492))
-
-        
+        # loading gui
         for i in range(0,len(loading_array)):
             selected_icon = ""
             if loading_array[i] == 0:
@@ -328,7 +331,10 @@ def loading_client():
                 selected_icon = loading1_icon
             SCREEN.blit(selected_icon,(358+(67*i),576))
 
+        # refresh counting kek
         if refresh_count % 50 == 0:
+            client_message("><get_player_size")
+            player_count_value = get_server_size()
             if all(loading_array):
                 for i in range(0,len(loading_array)):
                     loading_array[i] = 0
