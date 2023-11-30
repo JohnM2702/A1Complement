@@ -46,6 +46,9 @@ class Client:
         except:
             print("Error connecting to the server. Try again.")
 
+    def get_name():
+        return self.name
+
     def send_message(self, message):
         try:
             if isinstance(message, str):
@@ -102,6 +105,10 @@ class Client:
 
 client_ref = None
 
+def get_client_name():
+    global client_ref
+    return client_ref.get_name()
+
 def get_server_size():
     global player_size_data
     return player_size_data
@@ -110,12 +117,16 @@ def client_message(message):
     global client_ref
     client_ref.send_message(message)
 
-def client_start(server_ip="192.168.1.1", player_name="Juan"):
+def client_init(server_ip="192.168.1.1", player_name="Juan"):
     global client_ref
     client_obj = Client(ip=server_ip, name=player_name)
     client_ref = client_obj
-    client_obj.start()
-    #client_obj.send_message('yeet')
+
+def client_start():
+    global client_ref
+    client_ref.start()
+
+    # start() should be seperated
     
 import sys
 
