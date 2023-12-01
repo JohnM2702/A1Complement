@@ -6,7 +6,12 @@ from time import sleep
 from gamestate import GameState
 import time
 
+player_size_data = 0
+
+server_message_received = threading.Event()
+
 class Client:
+    
     def __init__(self, ip = None, port = 5566, size = 4096, name = "Juan") -> None:
         self.ip = self.get_ip()
         self.port = port
@@ -41,6 +46,9 @@ class Client:
         except:
             print("Error connecting to the server. Try again.")
 
+    def get_name():
+        return self.name
+
     def send_message(self, message):
         try:
             if isinstance(message, str):
@@ -52,6 +60,7 @@ class Client:
             print(f"[ERROR] {e}")
           
     def receive_messages(self, client_socket):
+        global player_size_data
         while True:
             try:
                 recv_data_binary = client_socket.recv(self.size)
@@ -73,7 +82,10 @@ class Client:
                 print(f"[ERROR] {e}")
                 break
             
-            print("\nServer broadcast: "+f"{recv_data}"+"\n")      
+            print("\nServer broadcast: "+f"{recv_data}"+"\n")
+            
+            if recv_data[0].isdigit():
+                player_size_data = recv_data.split(",")
            
     def get_ip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -88,10 +100,30 @@ class Client:
 
     # client.close()
 
-def client_start(server_ip="192.168.1.1", player_name="Juan"):
+client_ref = None
+
+def get_client_name():
+    global client_ref
+    return client_ref.get_name()
+
+def get_server_size():
+    global player_size_data
+    return player_size_data
+
+def client_message(message):
+    global client_ref
+    client_ref.send_message(message)
+
+def client_init(server_ip="192.168.1.1", player_name="Juan"):
+    global client_ref
     client_obj = Client(ip=server_ip, name=player_name)
-    client_obj.start()
-    client_obj.send_message('yeet')
+    client_ref = client_obj
+
+def client_start():
+    global client_ref
+    client_ref.start()
+
+    # start() should be seperated
     
 import sys
 

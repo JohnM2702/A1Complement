@@ -3,10 +3,12 @@ from sys import exit
 from pygame_textinput import *
 import subprocess
 import threading
+import queue
+import time
 
 # borrowing functions in server and clients
 from server import Server, server_start, get_server
-from client import client_start
+from client import client_start, client_init, get_client_name, client_message, get_server_size
 
 pygame.init()
 FPS = 60
@@ -75,7 +77,14 @@ number_three_hover = pygame.image.load(os.path.join('assets','number_three_hover
 number_three_rect = number_three.get_rect(topleft=(447,522))
 
 loading_bg = pygame.image.load(os.path.join('assets','loading.png')).convert_alpha()
-loading_bg_rect = mechanics_bg.get_rect(topleft=(269,384))
+loading_bg_rect = loading_bg.get_rect(topleft=(269,384))
+
+enter_btn = pygame.image.load(os.path.join('assets','enter.png')).convert_alpha()
+enter_btn_hover = pygame.image.load(os.path.join('assets','enter_hover.png')).convert_alpha()
+enter_btn_rect = enter_btn.get_rect(topleft=(401,570))
+
+name_box = pygame.image.load(os.path.join('assets','name_box.png')).convert_alpha()
+name_box_rect = name_box.get_rect(topleft=(355,487))
 
 question_box = pygame.image.load(os.path.join('assets','question_box.png')).convert_alpha()
 answer_box = pygame.image.load(os.path.join('assets','answer_box.png')).convert_alpha()
@@ -88,6 +97,8 @@ pcard_height = player_card.get_height()
 bg_timer = pygame.USEREVENT + 1
 pygame.time.set_timer(bg_timer,50)
 
+# Game Global Variables specific to Client
+# Reintegrate this to client sooon
 
 def run_server():
     subprocess.run(['python','server.py'])
@@ -204,6 +215,7 @@ def loading(max_players):
     server_start_thread = threading.Thread(target=server_start, args=(max_players,))
     server_start_thread.start()
     client_start()
+    loading_state = 1
     while running:
         refresh_count += 1
         for event in pygame.event.get():
@@ -222,16 +234,19 @@ def loading(max_players):
         SCREEN.blit(logo,logo_rect)
 
         if loading_state == 1:
-            a = 'Loading Into Game'
+            a = 'Making the Game'
         elif loading_state == 0:
             a = 'Searching for Game'
         loading_label = "{}".format(a)
         waiting_label = font_italic_big.render(loading_label,1,'Black')
         SCREEN.blit(waiting_label,(347,419))
 
-        player_count = get_server()
+        player_count_value = get_server()
 
-        player_count_text = "{}/{}".format(player_count, max_players)
+        if player_count_value == max_players:
+            game_proper()
+
+        player_count_text = "{}/{}".format(player_count_value, max_players)
         player_count = font_italic_big.render(player_count_text,1,'Black')
         SCREEN.blit(player_count,(477,492))
 
@@ -260,7 +275,90 @@ def loading(max_players):
         
         pygame.display.update()
         clock.tick(FPS)
+
+def loading_client():
+    loading_state = 0
+    running = True
+    loading_array = [0,0,0,0,0]
+    refresh_count = 0
+
+    client_start()
+    loading_state = 1
+
+    call_flag = 0
+    player_count_value = 0
+    while running:
+        refresh_count += 1
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+            if event.type == bg_timer:
+                update_bg()
+
+        SCREEN.fill((BEIGE))
+        SCREEN.blit(menu_bg,(0,bg_y))
+        SCREEN.blit(menu_bg,(0,bg_y-bg_height+6))
+        SCREEN.blit(loading_bg,loading_bg_rect)
+        SCREEN.blit(logo,logo_rect)
+
+        """
+        while player_count_value == 0:
+            client_message("><get_player_size")
+            player_count_value = get_server_size()
+            
+            if player_count_value != 0:
+                break
+        """
+
+        if loading_state == 1 and player_count_value != 0:
+            a = 'Making the Game'
+
+            player_count_text = "{}/{}".format(player_count_value[0], player_count_value[1])
+            player_count = font_italic_big.render(player_count_text,1,'Black')
+            SCREEN.blit(player_count,(477,492))
+
+            if player_count_value[0] == player_count_value[1]:
+                game_proper()
+            
+        else:
+            a = 'Searching for Game'
+
         
+        loading_label = "{}".format(a)
+        waiting_label = font_italic_big.render(loading_label,1,'Black')
+        SCREEN.blit(waiting_label,(347,419))
+
+        # loading gui
+        for i in range(0,len(loading_array)):
+            selected_icon = ""
+            if loading_array[i] == 0:
+                selected_icon = loading0_icon
+            else:
+                selected_icon = loading1_icon
+            SCREEN.blit(selected_icon,(358+(67*i),576))
+
+        # refresh counting kek
+        if refresh_count % 50 == 0:
+            client_message("><get_player_size")
+            player_count_value = get_server_size()
+            if all(loading_array):
+                for i in range(0,len(loading_array)):
+                    loading_array[i] = 0
+            else:
+                for i in range(0,len(loading_array)):
+                    if loading_array[i] == 0:
+                        loading_array[i] = 1
+                        break
+            if refresh_count == 300:
+                # change this to "when connected to client"
+                loading_state = 1
+                refresh_count = 0
+        
+        pygame.display.update()
+        clock.tick(FPS)
         
 def game_proper():
     # Temporary max input length
@@ -351,7 +449,7 @@ def main_menu():
         SCREEN.blit(logo,logo_rect)
         
         # Name field
-        name_label = font_italic.render('Name', True, (0,0,0))
+        name_label = font_italic.render('Hello there,', True, (0,0,0))
         name_label_rect = name_label.get_rect(topleft=(325,301))
         SCREEN.blit(name_label, name_label_rect)
         SCREEN.blit(name_field, name_field_rect)
@@ -386,7 +484,7 @@ def main_menu():
                     mechanics_btn_hovered = False
                 SCREEN.blit(join_btn_hover, join_btn_rect)
                 if lmb_clicked:
-                    define_player_window()
+                    loading_client()
             elif mechanics_btn_rect.collidepoint(mx, my):
                 if not mechanics_btn_hovered:
                     btn_sfx.play()
@@ -411,6 +509,77 @@ def main_menu():
         
         pygame.display.update()
         clock.tick(FPS)
+
+def player_name():
+    field_clicked = False
+    enter_btn_hovered = False
+    
+    while True:
+        lmb_clicked = False
         
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    lmb_clicked = True
+            if event.type == bg_timer:
+                update_bg()
+
+        # Background
+        SCREEN.fill((BEIGE))
+        SCREEN.blit(menu_bg,(0,bg_y))
+        SCREEN.blit(menu_bg,(0,bg_y-bg_height+6))
+        SCREEN.blit(loading_bg,loading_bg_rect)
+
+        # Namebox and Button
+        SCREEN.blit(name_box,name_box_rect)
+        SCREEN.blit(enter_btn,enter_btn_rect)
+
+        # Get the value of name_input
+        player_name_value = name_input.value
+
+        # Render player name on the screen
+        player_name_surface = name_font.render(player_name_value, 1, 'Black')
+        player_name_rect = player_name_surface.get_rect(center=(WIDTH / 2, 517))
+        SCREEN.blit(player_name_surface, player_name_rect)
+
+        # Label
+        window_label = font_italic_big.render("Enter Your Name",1,'Black')
+        SCREEN.blit(window_label,(365,419))
         
-main_menu()
+        # Logo
+        SCREEN.blit(logo,logo_rect)
+
+        mx, my = pygame.mouse.get_pos()
+        
+        # Handle button hover & sfx
+        if not field_clicked:
+            if enter_btn_rect.collidepoint(mx, my):
+                if not enter_btn_hovered:
+                    btn_sfx.play()
+                    enter_btn_hovered = True
+                SCREEN.blit(enter_btn_hover, enter_btn_rect)
+                if lmb_clicked and player_name_value != '':
+                    print(player_name_value,"has opened the game")
+                    client_init(player_name = player_name_value)
+                    main_menu()
+                    #define_player_window()
+                
+
+        # Allow editing of player name if the name box was clicked
+        if name_box_rect.collidepoint(mx, my) and lmb_clicked:
+            field_clicked = True
+        elif field_clicked and lmb_clicked and not player_name_rect.collidepoint(mx, my):
+            print("not yeet")
+            field_clicked = False
+        if field_clicked: name_input.update(events)
+
+        pygame.display.update()
+        clock.tick(FPS)
+
+
+# starting window sobberns
+player_name()
