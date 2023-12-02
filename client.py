@@ -1,16 +1,13 @@
-import random
 import socket
 import pickle
 import threading
-from time import sleep
-from gamestate import GameState
-import time
+from observer import Observable, Observer
 
 player_size_data = 0
 
 server_message_received = threading.Event()
 
-class Client:
+class Client(Observable):
     
     def __init__(self, ip = None, port = 5566, size = 4096, name = "Juan") -> None:
         self.ip = self.get_ip()
@@ -18,35 +15,31 @@ class Client:
         self.addr = (self.ip, self.port)
         self.size = size
         self.format = "utf-8"
-        self.client_id = (f"[Server {socket.gethostname()} ({self.ip}:{self.port})]")
         
         self.client = None
         
         self.name = name
     
     def start(self):
-        try:
-            # Client initialization
-            self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # Client initialization
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-            self.addr = (self.ip, self.port)
-            self.client.connect(self.addr)
-            print(f"[THIS CLIENT] Connected to server at {self.ip}:{self.port}")
+        self.addr = (self.ip, self.port)
+        self.client.connect(self.addr)
+        print(f"[THIS CLIENT] Connected to server at {self.ip}:{self.port}")
 
-            # Handle server incoming msg
-            receive_thread = threading.Thread(target=self.receive_messages, args=(self.client,))
-            receive_thread.start()
-            
-            # Send player information
-            try:
-                self.client.send((self.name+" - "+self.ip+":"+str(self.port)).encode(self.format))
-            except Exception as e:
-                print(f"[ERROR] {e}")
+        # Handle server incoming msg
+        receive_thread = threading.Thread(target=self.receive_messages, args=(self.client,))
+        receive_thread.start()
         
-        except:
-            print("Error connecting to the server. Try again.")
+        # Send player information
+        try:
+            self.client.send((self.name+" - "+self.ip+":"+str(self.port)).encode(self.format))
+        except Exception as e:
+            print(f"[ERROR] {e}")
+        
 
-    def get_name():
+    def get_name(self):
         return self.name
 
     def send_message(self, message):
@@ -83,6 +76,7 @@ class Client:
                 break
             
             print("\nServer broadcast: "+f"{recv_data}"+"\n")
+            self.notify(recv_data)
             
             if recv_data[0].isdigit():
                 player_size_data = recv_data.split(",")
@@ -98,7 +92,6 @@ class Client:
             s.close()
         return IP
 
-    # client.close()
 
 client_ref = None
 
@@ -125,9 +118,3 @@ def client_start():
 
     # start() should be seperated
     
-import sys
-
-"""
-if __name__ == "__main__":
-    #main(server_ip=sys.argv[1], player_name=sys.argv[2])
-    main()"""
