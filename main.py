@@ -201,6 +201,7 @@ def loading(game: Game):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
+            # Handle this case later
             # if event.type == pygame.KEYDOWN:
             #     if event.key == pygame.K_ESCAPE:
             #         running = False
@@ -412,6 +413,7 @@ def scroll_bg():
 
 def main_menu():
     field_clicked = False
+    name_input.cursor_visible = False
     btn_rects = [[create_btn,create_btn_hover,create_btn_rect,False],
                      [join_btn,join_btn_hover,join_btn_rect,False],
                      [mechanics_btn,mechanics_btn_hover,mechanics_btn_rect,False]]
@@ -444,7 +446,7 @@ def main_menu():
         # Buttons
         for rect in btn_rects: 
             SCREEN.blit(rect[0],rect[2])
-            if not field_clicked:
+            if name_input.value != '':
                 if rect[2].collidepoint(mx,my):
                     if rect[3] is False:
                         btn_sfx.play()
@@ -468,6 +470,7 @@ def main_menu():
             field_clicked = True
         elif field_clicked and lmb_clicked and not name_field_rect.collidepoint(mx,my):
             field_clicked = False
+            name_input.cursor_visible = False
         if field_clicked: name_input.update(events)
         
         pygame.display.update()
@@ -475,7 +478,6 @@ def main_menu():
         
 
 def player_name():
-    # field_clicked = True
     enter_btn_hovered = False
 
     while True:
@@ -514,7 +516,7 @@ def player_name():
         mx, my = pygame.mouse.get_pos()
         
         # Handle button hover & sfx
-        if player_name_value is not '':
+        if player_name_value != '':
             if enter_btn_rect.collidepoint(mx, my):
                 if not enter_btn_hovered:
                     btn_sfx.play()
@@ -527,13 +529,6 @@ def player_name():
             else: 
                 enter_btn_hovered = False
                 
-        # Allow editing of player name if the name box was clicked
-        # if name_box_rect.collidepoint(mx, my) and lmb_clicked:
-        #     field_clicked = True
-        # elif field_clicked and lmb_clicked and not player_name_rect.collidepoint(mx, my):
-        #     field_clicked = False
-        # if field_clicked: name_input.update(events)
-        
         pygame.display.update()
         clock.tick(FPS)
 
