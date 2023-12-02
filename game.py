@@ -38,3 +38,6 @@ class Game:
 
     def set_start(self):
         self.started = True
+        
+    def delete_player(self, ip):
+        del self.players[ip]

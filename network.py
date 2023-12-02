@@ -8,7 +8,7 @@ class Network:
         self.port = 5566
         self.addr = (self.server, self.port)
         self.ip = self.get_ip()
-        self.client.connect(self.addr)
+        self.connect()
     
     def get_ip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -24,9 +24,8 @@ class Network:
     def connect(self):
         try: 
             self.client.connect(self.addr)
-            return self.client.recv(2048).decode()
-        except:
-            pass
+        except Exception as e:
+            print(f'Failed to connect to the server: {e}')
     
     def send(self, data):
         try:
