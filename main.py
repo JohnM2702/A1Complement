@@ -441,8 +441,9 @@ def player_name():
 
     while True:
         lmb_clicked = False
-        
+        player_name_value = name_input.value
         events = pygame.event.get()
+        
         for event in events:
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -452,6 +453,9 @@ def player_name():
                     lmb_clicked = True
             if event.type == bg_timer:
                 scroll_bg()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN and player_name_value != '':
+                    main_menu()
 
         draw_bg(images['loading_bg'],loading_bg_rect)
 
@@ -462,10 +466,7 @@ def player_name():
         # Namebox and Button
         SCREEN.blit(images['name_box'],name_box_rect)
         SCREEN.blit(images['enter_btn'],enter_btn_rect)
-
-        # Get the value of name_input
-        player_name_value = name_input.value
-
+ 
         # Render player name on the screen
         player_name_surf = name_input.surface
         player_name_rect = player_name_surf.get_rect(center=(WIDTH/2,517))
@@ -483,8 +484,7 @@ def player_name():
                 SCREEN.blit(images['enter_btn_hover'], enter_btn_rect)
                 if lmb_clicked:
                     print(player_name_value,"has opened the game")
-                    while True:
-                        main_menu()
+                    main_menu()
             else: 
                 enter_btn_hovered = False
                 
