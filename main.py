@@ -181,7 +181,8 @@ def loading(game: Game):
 
         game_id = game.get_id()
         game_number = lalezar_35.render(f'Game {game_id}', 1, 'black')
-        SCREEN.blit(game_number, (449, 390))
+        game_number_rect = game_number.get_rect(center=(WIDTH/2,420))
+        SCREEN.blit(game_number, game_number_rect)
 
         waiting_label = inria_italic_40.render('Waiting for Players', 1, 'black')
         SCREEN.blit(waiting_label, (347, 444))
