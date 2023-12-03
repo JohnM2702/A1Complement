@@ -4,12 +4,15 @@ import threading
 from observer import Observable, Observer
 
 player_size_data = 0
+players_name_score = []
+qna_list = []
 
 server_message_received = threading.Event()
 
 class Client(Observable):
     
     def __init__(self, ip = None, port = 5566, size = 4096, name = "Juan") -> None:
+        super(Client, self).__init__()
         self.ip = self.get_ip()
         self.port = port
         self.addr = (self.ip, self.port)
@@ -34,7 +37,7 @@ class Client(Observable):
         
         # Send player information
         try:
-            self.client.send((self.name+" - "+self.ip+":"+str(self.port)).encode(self.format))
+            self.client.send((f"= JOIN {self.name}").encode(self.format))
         except Exception as e:
             print(f"[ERROR] {e}")
         
@@ -78,8 +81,8 @@ class Client(Observable):
             print("\nServer broadcast: "+f"{recv_data}"+"\n")
             self.notify(recv_data)
             
-            if recv_data[0].isdigit():
-                player_size_data = recv_data.split(",")
+            # if recv_data[0].isdigit():
+            #     player_size_data = recv_data.split(",")
            
     def get_ip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -91,6 +94,24 @@ class Client(Observable):
         finally:
             s.close()
         return IP
+    
+    
+class GameLogicClient(Observer):
+    def __init__(self):
+        super(GameLogicClient, self).__init__()
+        
+    def update(self, new_value):
+        print(f"Client Game Logic handles message: {new_value[0]}")
+        global client_ref
+        global player_size_data
+        global players_name_score
+
+        recv_data = new_value[0]
+        if isinstance(recv_data, str):
+            if recv_data[0].isdigit():
+                player_size_data = recv_data.split(",")
+        elif isinstance(recv_data, list):
+            players_name_score = recv_data
 
 
 client_ref = None
@@ -111,6 +132,14 @@ def client_init(server_ip="192.168.1.1", player_name="Juan"):
     global client_ref
     client_obj = Client(ip=server_ip, name=player_name)
     client_ref = client_obj
+    
+def get_players_name_score():
+    global client_ref
+    client_ref.send_message("? PLAYER NAME SCORE")
+    
+def get_qna():
+    global client_ref
+    client_ref.send_message("? QNA")
 
 def client_start():
     global client_ref

@@ -583,3 +583,4 @@ def player_name():
 
 # starting window sobberns
 player_name()
+# game_proper()

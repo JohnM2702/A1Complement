@@ -28,7 +28,7 @@ class Server(Observable):
                 data = pickle.dumps(message)
             conn.sendall(data)
         except Exception as e:
-            print(f"[ERROR] {e}")
+            print(f"[ERROR] [SERVER] {e}")
 
     def player_size(self):
         return str(len(self.clients))
@@ -64,7 +64,7 @@ class Server(Observable):
                     data = pickle.dumps(message)
                 client["connection"].sendall(data)
             except Exception as e:
-                print(f"[ERROR] {e}")
+                print(f"[ERROR] [SERVER] {e}")
 
     def handle_client(self, conn, addr):
         
@@ -76,10 +76,10 @@ class Server(Observable):
                 recv_data_binary = conn.recv(self.size)
             except ConnectionResetError as e:
                 print(f"[{addr[0]}] Disconnected")
-                print(f"[ERROR] {e}")
+                print(f"[ERROR] [SERVER] {e}")
                 break
             except Exception as e:
-                print(f"[ERROR] {e}")
+                print(f"[ERROR] [SERVER] {e}")
                 break
             
             try:
@@ -87,7 +87,7 @@ class Server(Observable):
             except UnicodeDecodeError:
                 recv_data = pickle.loads(recv_data_binary)
             except Exception as e:
-                print(f"[ERROR] {e}")
+                print(f"[ERROR] [SERVER] {e}")
                 break
             
             print(f"[{addr[0]}] {recv_data}")
@@ -108,7 +108,7 @@ class Server(Observable):
         try:
             conn.close()
         except Exception as e:
-            print(f"[ERROR] {e}")       
+            print(f"[ERROR] [SERVER] {e}")       
 
     def get_ip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -127,6 +127,7 @@ class GameLogic(Observer):
         super(GameLogic, self).__init__()
         self.state = "WAITING"
         self.max_players = max_players
+        self.player_name_score = []
         pass
 
     def update(self, new_value):
@@ -139,16 +140,22 @@ class GameLogic(Observer):
         
         match self.state:
             case "WAITING":
+                if "= JOIN" in recv_data:
+                    pname = recv_data.replace('= JOIN', '').strip()
+                    self.player_name_score.append({"name":pname, "score":0})
+                    print(self.player_name_score)
                 if "><" in recv_data:
                     recv_data = recv_data[recv_data.index("><")+2:]
                 if recv_data == "get_player_size":
-                    return_message = str(self.player_size()) +"," + str(self.get_max_connection())
-                    self.send_to_client(conn, return_message)
+                    return_message = str(server_ref.player_size()) +"," + str(server_ref.get_max_connection())
+                    server_ref.send_to_client(conn, return_message)
                     print("<<< Sending size", return_message)
                 server_ref.broadcast_message(recv_data)
-                server_ref.broadcast_message(qna_ref.get_random_qna(7))
             case "ONGOING":
-                pass
+                if recv_data == "? QNA":
+                    server_ref.broadcast_message(qna_ref.get_random_qna(7))
+                if recv_data == "? PLAYER NAME SCORE":
+                    pass                                    
             case _:
                 pass
             
