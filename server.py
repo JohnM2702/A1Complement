@@ -27,11 +27,11 @@ class Server:
         print("Length:",len(self.clients))
 
     def start(self):
-        print(f"{self.server_id} Server is starting...")
+        print(f"Server is starting...")
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind(self.addr)
         server.listen()
-        print(f"{self.server_id} Server is listening on {self.ip}:{self.port}")
+        print(f"Server is listening on {self.ip}:{self.port}")
 
         while True: 
             conn, addr = server.accept()
