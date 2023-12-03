@@ -7,15 +7,16 @@ from time import sleep
 from questions import Q_and_A
 
 server_ref = None
+qna_ref = None
 
-class Server:
+class Server(Observable):
     def __init__(self, port = 5566, size = 4096, max_connection = 4) -> None:
+        super(Server, self).__init__()
         self.ip = self.get_ip()
         self.port = port
         self.addr = (self.ip, self.port)
         self.size = size
         self.format = "utf-8"
-        self.server_id = (f"[Server {socket.gethostname()} ({self.ip}:{self.port})]")
         self.max_connection = max_connection
         
         self.clients: dict[str,socket.socket] = {}
@@ -290,15 +291,15 @@ class Server:
 
     def handle_client(self, conn, addr):
         
-        CLIENT_ID = (f"[Client ({addr[0]} @ {addr[1]})]")
-        print(f"{CLIENT_ID}  Estabilished connection to server.")
+        print(f"[{addr[0]}]  Estabilished connection to server.")
         
         connected = True
         while connected:
             try:
                 recv_data_binary = conn.recv(self.size)
-            except ConnectionResetError:
+            except ConnectionResetError as e:
                 print(f"[{addr[0]}] Disconnected")
+                print(f"[ERROR] {e}")
                 break
             except Exception as e:
                 print(f"[ERROR] {e}")
@@ -315,6 +316,7 @@ class Server:
             print(f"[{addr[0]}] {recv_data}")
             print(self.debug_clients())
             self.broadcast_message(recv_data)
+
 
                 
         with self.clients_lock:
@@ -335,6 +337,43 @@ class Server:
         finally:
             s.close()
         return IP
+    
+    
+class GameLogic(Observer):
+    def __init__(self, max_players):
+        super(GameLogic, self).__init__()
+        self.state = "WAITING"
+        self.max_players = max_players
+        pass
+
+    def update(self, new_value):
+        print(f"Game Logic handles message: {new_value[0]} by {new_value[1]}")
+        global server_ref
+        global qna_ref
+        
+        recv_data = new_value[0]
+        conn = new_value[1]
+        
+        match self.state:
+            case "WAITING":
+                if "><" in recv_data:
+                    recv_data = recv_data[recv_data.index("><")+2:]
+                if recv_data == "get_player_size":
+                    return_message = str(self.player_size()) +"," + str(self.get_max_connection())
+                    self.send_to_client(conn, return_message)
+                    print("<<< Sending size", return_message)
+                server_ref.broadcast_message(recv_data)
+                server_ref.broadcast_message(qna_ref.get_random_qna(7))
+            case "ONGOING":
+                pass
+            case _:
+                pass
+            
+                
+        
+        
+
+    
 
 class QuestionAnswerContainer:
     def __init__(self) -> None:
@@ -393,14 +432,17 @@ def set_server_ref(obj):
 
 def server_start(max_players=4):
     global server_ref
+    global qna_ref
+    gamelogic_obj = GameLogic(max_players)
+    qna_obj = QuestionAnswerContainer()
     server_obj = Server(max_connection=max_players)
     server_ref = server_obj
-    #set_server_ref(server_obj)
-    # testing connection first before game, will uncomment after    #qna_obj = QuestionAnswerContainer()
-    #qna_obj.read_from_file()
+    qna_ref = qna_obj
+    # set_server_ref(server_obj)
+    qna_obj.read_from_file()
+    server_obj.attach(gamelogic_obj)
     
     server_obj.start()
-
     
 """
 if __name__ == "__main__":
