@@ -27,22 +27,28 @@ class Network:
         except Exception as e:
             print(f'Failed to connect to the server: {e}')
     
-    def send(self, data):
+    def send_and_receive(self, data):
         try:
             self.client.sendall(str.encode(data))
             return self.receive_pickle()
         except socket.error as e:
             print(e)
+            
+    def send(self, data):
+        try:
+            self.client.sendall(str.encode(data))
+        except socket.error as e:
+            print(e)
     
     def send_create(self, player_size, name):
         data = f'create,{player_size},{self.ip},{name}'
-        return self.send(data)
+        return self.send_and_receive(data)
 
     def send_join(self, game_id, name):
         data = f'join,{game_id},{self.ip},{name}'
-        return self.send(data)
+        return self.send_and_receive(data)
 
-    def wait_for_players(self):
+    def receive_game_data(self):
         try:
             self.client.sendall(str.encode('waiting'))
             return self.receive_pickle()
@@ -68,3 +74,4 @@ class Network:
             except pickle.UnpicklingError:
                 # Continue receiving data until a complete pickled object is obtained
                 continue
+                      

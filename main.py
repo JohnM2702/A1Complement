@@ -11,7 +11,6 @@ WIDTH,HEIGHT = 1024,768
 SCREEN = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Guessing Galore")
 clock = pygame.time.Clock()
-round_limit = 10000 # 10 seconds
 network = Network()
 
 # Colors
@@ -20,6 +19,8 @@ BEIGE = '#E1D4BB'
 
 # Fonts
 inria_20 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),20)
+inria_50 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),50)
+inria_50.align = pygame.FONT_CENTER
 inria_italic_20 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Italic.ttf'),20)
 inria_italic_40 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Italic.ttf'),40)
 lalezar_30 = pygame.font.Font(os.path.join('assets','fonts','Lalezar-Regular.ttf'),30)
@@ -51,6 +52,7 @@ name_box_rect = images['name_box'].get_rect(topleft=(355,487))
 
 pcard_width, pcard_height = images['player_card'].get_size()
 gbox_width, gbox_height = images['game_box'].get_size()
+qbox_width, qbox_height = images['question_box'].get_size()
 bg_height = images['menu_bg'].get_height()
 bg_y = 0
 
@@ -201,7 +203,7 @@ def loading(game: Game):
         clock.tick(FPS)
 
         try:
-            data = network.wait_for_players()
+            data = network.receive_game_data()
         except:
             waiting = False
             print('[Waiting for Players]: Something went wrong.')
@@ -218,7 +220,7 @@ def loading(game: Game):
 
 def fetch_games():
     try:
-        return network.send("fetch games")
+        return network.send_and_receive("fetch games")
     except Exception as e:
         print(f'Failed to fetch games: {e}')
         return None
@@ -308,45 +310,157 @@ def join_game(game_id:int):
         if data.has_started(): game_proper(data)
         else: loading(data)
 
-    
-def game_proper(game:Game):
-    pygame.time.set_timer(round_timer,round_limit)
 
+def send_message(message, receive=True):
+    try:
+        if receive: return network.send_and_receive(message)
+        network.send(message)
+    except Exception as e:
+        print(f'Failed to send message: {e}')
+    
+    
+def game_proper(game: Game):
     # Temporary max input length
     # ideal: dynamically set when client can receive answers from server
     manager = None
-    answer_input = TextInputVisualizer(manager,lalezar_50,cursor_blink_interval=500,cursor_width=0)
+    answer_input = TextInputVisualizer(manager,lalezar_50,cursor_width=0)
+    
+    QnA = game.get_qna()
+    round_score = 0
+    
+    while True:
+        data = send_message('index')
+        if isinstance(data,int):
+            index = data
+            break
+        
+    time_limit = 10000
+    pygame.time.set_timer(round_timer,time_limit,1)
+    timer_start_time = pygame.time.get_ticks()
+    score_sent = False
+    timer_stopped = False   # nfgdfgl
+    index = 0   # test
+    time_limit = 10000
+    
     ongoing = True
     
     while ongoing:
         events = pygame.event.get()
+        
         for event in events: 
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
             if event.type == bg_timer:
                 scroll_bg()
-            if event.type == pygame.KEYDOWN:    # Back to main menu (temp only!)
-                if event.key == pygame.K_ESCAPE:
-                    ongoing = False
+            # if event.type == pygame.KEYDOWN:    # Back to main menu (temp only!)
+            #     if event.key == pygame.K_ESCAPE:
+            #         ongoing = False
             if event.type == round_timer:
-                # Time's up
-                pass
+                # time's up
+                if not score_sent: 
+                    # didnt guess correctly within the time limit
+                    data = send_message(f'score,{round_score}')
+                    if isinstance(data,Game): game = data
+                    score_sent = True
+                round_score = 0
+                time_limit = 10000
+                timer_stopped = True
+                
+        # if timer_stopped:
+        #     try:
+        #         data = receive_game_data()
+        #         if data == 'next round':
+        #             data = network.send('index')
+        #     except Exception as e: 
+        #         print(f'Failed to request index: {e}')
+        #     # print(str(data))
+        #     print(str(type(data)) + f' data is: {data}')
+        #     if isinstance(data,int): 
+        #         index = data
+        #         pygame.time.set_timer(round_timer,time_limit,1)
+        #         timer_start_time = pygame.time.get_ticks()
+        #         timer_stopped = False
+        #         score_sent = False
+        #     # elif isinstance(data,Game): game = data
+        # else: 
+        #     data = receive_game_data()
+        #     if isinstance(data,Game): game = data
         
-        draw_game(game)
+        if timer_stopped:
+            data = send_message('index')
+            if isinstance(data,int): 
+                index = data
+                pygame.time.set_timer(round_timer,time_limit,1)
+                timer_start_time = pygame.time.get_ticks()
+                timer_stopped = False
+                score_sent = False
+        else:
+            data = receive_game_data()
+            if isinstance(data,Game): game = data 
             
+        # data = receive_game_data()
+        # if isinstance(data,Game): game = data 
+        # elif isinstance(data,str) and data == 'next round':
+        #     data = send_message('get index')
+        #     if isinstance(data,int): 
+        #         index = data
+        #         pygame.time.set_timer(round_timer,time_limit,1)
+        #         timer_start_time = pygame.time.get_ticks()
+        #         # timer_stopped = False
+        #         score_sent = False
         
+        print(str(type(data)) + f' data is: {data}')
+        
+                    
+        draw_bg(bg=images['game_bg'],draw_logo=False,color=BLUE)
+        SCREEN.blit(images['question_box'],(23,18))
+        
+        question_surf = inria_50.render(QnA[index][0],1,'black',wraplength=qbox_width-10)
+        question_rect = question_surf.get_rect(center=(WIDTH/2,qbox_height/2))
+        SCREEN.blit(question_surf,question_rect)
+        
+        draw_players(game)
+        
+        SCREEN.blit(images['answer_box'],(23,669))
         answer_input_rect = answer_input.surface.get_rect(center=(WIDTH/2,715))
         SCREEN.blit(answer_input.surface,answer_input_rect)
         answer_input.update(events)
         
+        # guessed correctly before the time limit
+        if answer_input.value == QnA[index][1] and not score_sent:
+            elapsed_time = pygame.time.get_ticks() - timer_start_time
+            if elapsed_time <= 5000: round_score = 100
+            else: round_score = 50
+            data = send_message(f'score,{round_score}')
+            if isinstance(data,Game): game = data
+            score_sent = True
+            # round_score = 0
+            
+        # if index > 
+        
         pygame.display.update()
         clock.tick(FPS)
-        
 
-def draw_game(game:Game):
-    draw_bg(bg=images['game_bg'],draw_logo=False,color=BLUE)
-    SCREEN.blit(images['question_box'],(23,18))
+
+def receive_game_data():
+    try:
+        return network.receive_game_data()
+    except:
+        print('Something went wrong. Restarting network...')
+        # idk if this works
+        restart_network()
+        main_menu()
+    
+    
+def send_score(round_score):
+    try:
+        return network.send_and_receive(f'score,{round_score}')
+    except Exception as e: 
+        print(f'Failed to send score: {e}')
+
+
+def draw_players(game:Game):
     players = game.get_players()
     card_x, card_y = 23, 494
     name_x, name_y = 35, 562
@@ -360,9 +474,8 @@ def draw_game(game:Game):
         card_x += 248
         name_x += 248
         score_x += 248
-    SCREEN.blit(images['answer_box'],(23,669))
-
-
+    
+    
 # Scrolling background effect
 def scroll_bg():
     global bg_y
@@ -371,6 +484,11 @@ def scroll_bg():
         bg_y = 0  
 
 
+def restart_network():
+    global network 
+    network = Network()
+    
+    
 def main_menu():
     field_clicked = False
     name_input.cursor_visible = False

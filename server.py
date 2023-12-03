@@ -3,6 +3,7 @@ import pickle
 import random
 import threading
 from game import Game
+from time import sleep
 from questions import Q_and_A
 
 server_ref = None
@@ -90,7 +91,7 @@ class Server:
                 
             self.handle_waiting(conn,game)
                     
-            self.handle_game(conn,game)
+            self.handle_game(conn,game,addr[0])
         
         except socket.error as e:
             print(f"ERROR: {e}")
@@ -150,14 +151,103 @@ class Server:
                 player_count = updated_count
             else: conn.sendall(pickle.dumps(''))
     
-    def handle_game(self, conn: socket.socket, game: Game):
-        while game.has_started():
-            data = conn.recv(2048).decode()
-            if not data: raise socket.error('lost connection')
+    def handle_game(self, conn: socket.socket, game: Game, ip: str):
+        index = 0
+        # conn.sendall(pickle.dumps(index))
+        
+        while True:
+            time_limit = 10000
             
-            # In progress
+            # Send index of next question
+            self.handle_round_transition(conn,game,index,ip)
+            
+            # data = conn.recv(2048).decode().split(',')
+            # if not data: raise socket.error('lost connection')
+        
+            # elif data[0] == 'index':
+            #     print(f'index request received from {ip}')
+            #     conn.sendall(pickle.dumps(index))
+            #     game.increment_sent_index()
+            # else: conn.sendall(pickle.dumps(''))
+            
+            # print(f'wow {data} from {ip}')
+            
+            # # print(str(data))
+            # # print(index)
+            # while True:
+            #     if game.count_sent_index() == game.get_player_count(): break
+            
+            print(f'round {index} start {ip}')
+            # while game.get_scores_count() < game.get_player_count():
+            while not game.is_round_finished(index):
+                data = conn.recv(2048).decode().split(',')
+                if not data: raise socket.error('lost connection')
                 
-
+                elif data[0] == 'add time':
+                    time_limit += 5000
+                    conn.sendall(pickle.dumps(time_limit))
+                elif data[0] == 'subtract time':
+                    self.broadcast_with_exclusion('subtract 3000',ip)
+                elif data[0] == 'disable hint':
+                    self.broadcast_with_exclusion('disable hint',ip)
+                elif data[0] == 'score':
+                    print(f'score received: {data[1]} from {ip}')
+                    round_finished = game.update_score(ip,int(data[1]),index)
+                    self.broadcast_message(game)
+                    # if round_finished: break
+                    
+                # if game.is_round_finished(): break
+                else:
+                    # print(f'{data} else') 
+                    conn.sendall(pickle.dumps(''))
+                
+            print(f'round over {ip}')
+            
+            # data = conn.recv(2048).decode()
+            # if not data: raise socket.error('lost connection')
+            # print(f'{data} from {ip}')
+            
+            # conn.sendall(pickle.dumps('next round'))
+            
+            index += 1
+            if index == game.get_qna_length():
+                print('game over')
+                break
+            
+            print('test')
+            # game.reset_sent_index()
+    
+    
+    def handle_round_transition(self, conn:socket.socket, game:Game, index:int, ip:str):
+        data = conn.recv(2048).decode()
+        if not data: raise socket.error('lost connection')
+        elif 'index' in data:
+            print(f'index request received from {ip}')
+            conn.sendall(pickle.dumps(index))
+            game.increment_sent_index()
+        # else: conn.sendall(pickle.dumps(''))
+        
+        print(f'wow {data} from {ip}')
+        
+        while True:
+            if game.count_sent_index() == game.get_player_count(): return
+            
+        
+    def broadcast_with_exclusion(self, message, excluded):
+        for ip, client in self.clients.items():
+            if ip is not excluded:
+                try:
+                    client.sendall(pickle.dumps(message))
+                except Exception as e:
+                    print(f"[ERROR] {e}")
+                    
+    def broadcast_message(self, message):
+        for ip, client in self.clients.items():
+            try:
+                client.sendall(pickle.dumps(message))
+            except Exception as e:
+                print(f"[ERROR] {e}")
+                
     # def send_game(self, game, ip, conn):
     #     try:
     #         conn.sendall(pickle.dumps(game))
@@ -187,16 +277,16 @@ class Server:
     #         except Exception as e:
     #             print(f"[ERROR] {e}")
 
-    def broadcast_message(self, message):
-        for client in self.clients:
-            try:
-                if isinstance(message, str):
-                    data = message.encode(self.format)
-                else:
-                    data = pickle.dumps(message)
-                client["connection"].sendall(data)
-            except Exception as e:
-                print(f"[ERROR] {e}")
+    # def broadcast_message(self, message):
+    #     for client in self.clients:
+    #         try:
+    #             if isinstance(message, str):
+    #                 data = message.encode(self.format)
+    #             else:
+    #                 data = pickle.dumps(message)
+    #             client["connection"].sendall(data)
+    #         except Exception as e:
+    #             print(f"[ERROR] {e}")
 
     def handle_client(self, conn, addr):
         
