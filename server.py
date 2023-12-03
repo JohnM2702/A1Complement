@@ -6,18 +6,13 @@ from game import Game
 from time import sleep
 from questions import Q_and_A
 
-server_ref = None
-qna_ref = None
-
-class Server(Observable):
-    def __init__(self, port = 5566, size = 4096, max_connection = 4) -> None:
-        super(Server, self).__init__()
+class Server:
+    def __init__(self) -> None:
         self.ip = self.get_ip()
-        self.port = port
+        self.port = 5566
         self.addr = (self.ip, self.port)
-        self.size = size
+        self.size = 2048
         self.format = "utf-8"
-        self.max_connection = max_connection
         
         self.clients: dict[str,socket.socket] = {}
         self.clients_lock = threading.Lock()
@@ -27,22 +22,15 @@ class Server(Observable):
 
         self.start()
 
-    def player_size(self):
-        return len(self.clients)
-
     def debug_clients(self):
         print(self.clients)
         print("Length:",len(self.clients))
 
     def start(self):
         print(f"{self.server_id} Server is starting...")
-        try:
-            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server.bind(self.addr)
-            server.listen()
-        except:
-            print(f"{self.server_id} Server failed to start. Port {self.port} is currently in use by another process.")
-            return
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.bind(self.addr)
+        server.listen()
         print(f"{self.server_id} Server is listening on {self.ip}:{self.port}")
 
         while True: 
@@ -338,116 +326,6 @@ class Server(Observable):
             s.close()
         return IP
     
-    
-class GameLogic(Observer):
-    def __init__(self, max_players):
-        super(GameLogic, self).__init__()
-        self.state = "WAITING"
-        self.max_players = max_players
-        pass
-
-    def update(self, new_value):
-        print(f"Game Logic handles message: {new_value[0]} by {new_value[1]}")
-        global server_ref
-        global qna_ref
-        
-        recv_data = new_value[0]
-        conn = new_value[1]
-        
-        match self.state:
-            case "WAITING":
-                if "><" in recv_data:
-                    recv_data = recv_data[recv_data.index("><")+2:]
-                if recv_data == "get_player_size":
-                    return_message = str(self.player_size()) +"," + str(self.get_max_connection())
-                    self.send_to_client(conn, return_message)
-                    print("<<< Sending size", return_message)
-                server_ref.broadcast_message(recv_data)
-                server_ref.broadcast_message(qna_ref.get_random_qna(7))
-            case "ONGOING":
-                pass
-            case _:
-                pass
-            
-                
-        
-        
-
-    
-
-class QuestionAnswerContainer:
-    def __init__(self) -> None:
-        self.qna_list = []
-
-    def add_qna(self, new_qna:dict):
-        """        
-        {
-            "q": "question/trivia",
-            "a": "answer"
-        }
-        """
-        self.qna_list.append(new_qna)
-
-    def write_to_file(self):
-        pickle_file = open('pickled_qna', 'ab')
-        
-        pickle.dump(self.qna_list, pickle_file)   
-
-        pickle_file.close()
-
-    def read_from_file(self):
-        pickle_file = open('pickled_qna', 'rb')    
-
-        extracted_qna_list = pickle.load(pickle_file)
-        self.qna_list = extracted_qna_list
-
-        pickle_file.close()
-
-    def qna_list_dump(self):
-        #- prints all qna and its corresponding index
-        for index in range(len(self.qna_list)):
-            print(f"{index}")
-            print("q: " + str(self.qna_list[index]["q"]))
-            print("a: " + str(self.qna_list[index]["a"]))
-            print()
-            
-    def get_random_qna(self, number=1):
-        if number > len(self.qna_list):
-            print("Warning: The requested number is greater than the number of available Q&A pairs.")
-            random.shuffle(self.qna_list)
-            return self.qna_list
-
-
-        random_qna_list = random.sample(self.qna_list, number)
-        return random_qna_list
-
-def get_server():
-    global server_ref
-    size = server_ref.player_size()
-    return size
-
-def set_server_ref(obj):
-    global server_ref
-    server_ref = obj
-
-def server_start(max_players=4):
-    global server_ref
-    global qna_ref
-    gamelogic_obj = GameLogic(max_players)
-    qna_obj = QuestionAnswerContainer()
-    server_obj = Server(max_connection=max_players)
-    server_ref = server_obj
-    qna_ref = qna_obj
-    # set_server_ref(server_obj)
-    qna_obj.read_from_file()
-    server_obj.attach(gamelogic_obj)
-    
-    server_obj.start()
-    
-"""
-if __name__ == "__main__":
-    #main(max_players=sys.argv[1])
-    main(max_players=4)"""
 
 class IdGenerator:
     def __init__(self, start_range=1, end_range=100):
