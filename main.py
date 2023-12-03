@@ -11,7 +11,8 @@ WIDTH,HEIGHT = 1024,768
 SCREEN = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Guessing Galore")
 clock = pygame.time.Clock()
-network = Network()
+server_ip = '192.168.1.13'
+network = Network(server_ip)
 
 # Colors
 BLUE = '#537188'
@@ -215,6 +216,7 @@ def loading(game: Game):
         game = data
         waiting = game.get_player_count() < game.get_player_size()
 
+    pygame.time.set_timer(loading_timer, 0) # Disable timer
     game_proper(game)
 
 
@@ -410,7 +412,7 @@ def game_proper(game: Game):
         #         # timer_stopped = False
         #         score_sent = False
         
-        print(str(type(data)) + f' data is: {data}')
+        # print(str(type(data)) + f' data is: {data}')
         
                     
         draw_bg(bg=images['game_bg'],draw_logo=False,color=BLUE)
@@ -486,7 +488,7 @@ def scroll_bg():
 
 def restart_network():
     global network 
-    network = Network()
+    network = Network(server_ip)
     
     
 def main_menu():

@@ -4,7 +4,6 @@ class Game:
         self.QnA = []
         self.started = False
         self.round_scores_count = 0 # How many players sent their score at the end of a round
-        self.round_finished = False
         self.sent_index = 0 # How many players have been sent the index of the next question
         self.rounds = [0 for _ in range (10)]   # 0: not finished, 1: finished
         self.id = id
@@ -55,33 +54,17 @@ class Game:
         self.round_scores_count += 1
         if self.round_scores_count >= self.get_player_count():
             self.round_scores_count = 0
-            # self.round_finished = True
             self.rounds[index] = 1
             self.sent_index = 0
-            return True 
-        return False
     
     def get_score(self, ip):
         return self.players[ip]['score']
-    
-    # def get_scores_count(self):
-    #     return self.round_scores_count
-    
-    # def reset_sent_score(self):
-    #     self.sent_score = 0
-    #     self.complete_scores = False
-        
+
     def is_round_finished(self, index):
         return self.rounds[index]
-    
-    # def reset_round(self):
-    #     self.round_finished = False
-    
+
     def increment_sent_index(self):
         self.sent_index += 1
     
     def count_sent_index(self):
         return self.sent_index
-
-    # def reset_sent_index(self):
-    #     self.sent_index = 0

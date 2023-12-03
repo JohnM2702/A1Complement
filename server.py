@@ -50,12 +50,12 @@ class Server:
         print(f'Game {game_id} has been successfully created')
         game = self.games[game_id]
 
-        # Add a player with an initial score of 0
-        # to the dict of players in the new game
+        # Add the client, with an initial score of 0, 
+        # to the dict of players in the newly created game
         game.add_player(ip, name, 0)
         print(f"{ip} has joined Game {game_id}")
 
-        # Shuffle Q_and_A then use the first 10
+        # Shuffle Q_and_A, then take the first 10 questions & answers
         random.shuffle(Q_and_A)
         game.set_qna(Q_and_A[:10])
         
@@ -73,13 +73,17 @@ class Server:
     def threaded_client(self, conn:socket.socket, addr):
         game = None 
         try:
+            # PREGAME: client will either create a new game,
+            # view existing games, or join a game
             game, game_id = self.handle_pregame(conn)
 
             # Client has joined a game, so send them the Game object
             conn.sendall(pickle.dumps(game))
-                
+            
+            # Client will now wait for other players to join
             self.handle_waiting(conn,game)
-                    
+            
+            # Play the actual game
             self.handle_game(conn,game,addr[0])
         
         except socket.error as e:
@@ -90,14 +94,16 @@ class Server:
         
         finally: 
             if game is not None:
+                # Delete the player from the list of players in the Game object
                 game.delete_player(addr[0])
                 player_count = game.get_player_count()
+                # Delete the game if there is only 1 or no players left
                 if (player_count <= 1 and game.has_started()) or player_count == 0:
                     try: 
                         del self.games[game_id]
                         print(f'Deleting Game {game_id}')
                     except: pass
-            
+            # Delete the client from the list of clients in the server
             del self.clients[addr[0]]
             print(f'{addr[0]} has disconnected')
             conn.close()
@@ -124,7 +130,7 @@ class Server:
                 else: 
                     conn.sendall(pickle.dumps("game is full"))
 
-            # Fetch games requested (view games screen)
+            # Fetch games requested ('view games' screen)
             else: conn.sendall(pickle.dumps(self.games))
     
     def handle_waiting(self, conn: socket.socket, game: Game):
@@ -142,8 +148,6 @@ class Server:
     
     def handle_game(self, conn: socket.socket, game: Game, ip: str):
         index = 0
-        # conn.sendall(pickle.dumps(index))
-        
         while True:
             time_limit = 10000
             
@@ -167,11 +171,10 @@ class Server:
             #     if game.count_sent_index() == game.get_player_count(): break
             
             print(f'round {index} start {ip}')
-            # while game.get_scores_count() < game.get_player_count():
             while not game.is_round_finished(index):
                 data = conn.recv(2048).decode().split(',')
-                if not data: raise socket.error('lost connection')
-                
+                if not data: 
+                    raise socket.error('lost connection')
                 elif data[0] == 'add time':
                     time_limit += 5000
                     conn.sendall(pickle.dumps(time_limit))
@@ -181,16 +184,12 @@ class Server:
                     self.broadcast_with_exclusion('disable hint',ip)
                 elif data[0] == 'score':
                     print(f'score received: {data[1]} from {ip}')
-                    round_finished = game.update_score(ip,int(data[1]),index)
+                    game.update_score(ip,int(data[1]),index)
                     self.broadcast_message(game)
-                    # if round_finished: break
-                    
-                # if game.is_round_finished(): break
                 else:
-                    # print(f'{data} else') 
                     conn.sendall(pickle.dumps(''))
                 
-            print(f'round over {ip}')
+            print(f'Round {index} is over, {ip}')
             
             # data = conn.recv(2048).decode()
             # if not data: raise socket.error('lost connection')
@@ -200,11 +199,8 @@ class Server:
             
             index += 1
             if index == game.get_qna_length():
-                print('game over')
+                print('Game Over')
                 break
-            
-            print('test')
-            # game.reset_sent_index()
     
     
     def handle_round_transition(self, conn:socket.socket, game:Game, index:int, ip:str):
@@ -217,11 +213,10 @@ class Server:
         # else: conn.sendall(pickle.dumps(''))
         
         print(f'wow {data} from {ip}')
-        
+
         while True:
             if game.count_sent_index() == game.get_player_count(): return
             
-        
     def broadcast_with_exclusion(self, message, excluded):
         for ip, client in self.clients.items():
             if ip is not excluded:
@@ -275,45 +270,7 @@ class Server:
     #                 data = pickle.dumps(message)
     #             client["connection"].sendall(data)
     #         except Exception as e:
-    #             print(f"[ERROR] {e}")
-
-    def handle_client(self, conn, addr):
-        
-        print(f"[{addr[0]}]  Estabilished connection to server.")
-        
-        connected = True
-        while connected:
-            try:
-                recv_data_binary = conn.recv(self.size)
-            except ConnectionResetError as e:
-                print(f"[{addr[0]}] Disconnected")
-                print(f"[ERROR] {e}")
-                break
-            except Exception as e:
-                print(f"[ERROR] {e}")
-                break
-            
-            try:
-                recv_data = recv_data_binary.decode()
-            except UnicodeDecodeError:
-                recv_data = pickle.loads(recv_data_binary)
-            except Exception as e:
-                print(f"[ERROR] {e}")
-                break
-            
-            print(f"[{addr[0]}] {recv_data}")
-            print(self.debug_clients())
-            self.broadcast_message(recv_data)
-
-
-                
-        with self.clients_lock:
-            self.clients[:] = [client for client in self.clients if client["address"] != addr]
-
-        try:
-            conn.close()
-        except Exception as e:
-            print(f"[ERROR] {e}")       
+    #             print(f"[ERROR] {e}")    
 
     def get_ip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -325,7 +282,6 @@ class Server:
         finally:
             s.close()
         return IP
-    
 
 class IdGenerator:
     def __init__(self, start_range=1, end_range=100):
@@ -339,5 +295,6 @@ class IdGenerator:
             if new_id not in self.generated_ids:
                 self.generated_ids.add(new_id)
                 return new_id
+            
             
 server = Server()
