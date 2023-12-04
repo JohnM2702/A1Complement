@@ -11,7 +11,7 @@ WIDTH,HEIGHT = 1024,768
 SCREEN = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Guessing Galore")
 clock = pygame.time.Clock()
-server_ip = '192.168.1.13'
+server_ip = '172.16.7.108'
 network = Network(server_ip)
 
 # Colors
@@ -50,6 +50,9 @@ number_three_rect = images['number_three'].get_rect(topleft=(447,522))
 loading_bg_rect = images['loading_bg'].get_rect(topleft=(269,384))
 enter_btn_rect = images['enter_btn'].get_rect(topleft=(401,570))
 name_box_rect = images['name_box'].get_rect(topleft=(355,487))
+
+congrats_label = images['congrats_label'].get_rect(topleft=(294,194))
+win_label = images['congrats_label_2'].get_rect(topleft=(485,367))
 
 pcard_width, pcard_height = images['player_card'].get_size()
 gbox_width, gbox_height = images['game_box'].get_size()
@@ -218,6 +221,7 @@ def loading(game: Game):
 
     pygame.time.set_timer(loading_timer, 0) # Disable timer
     game_proper(game)
+    #end_screen(game)
 
 
 def fetch_games():
@@ -467,15 +471,36 @@ def draw_players(game:Game):
     card_x, card_y = 23, 494
     name_x, name_y = 35, 562
     score_x, score_y = 35, 602
+    counter = 1
     for id, data in players.items():
         name = lalezar_30.render(data['name'],1,'black')
         score = lalezar_30.render(str(data['score']),1,'black')
-        SCREEN.blit(images['player_card'],(card_x,card_y))
+        player_card_holder = 'player_card_' + str(counter)
+        SCREEN.blit(images[player_card_holder],(card_x,card_y))
         SCREEN.blit(name,(name_x,name_y))
         SCREEN.blit(score,(score_x,score_y))
         card_x += 248
         name_x += 248
         score_x += 248
+        counter += 1
+
+def draw_leaderboard(game:Game):
+    players = game.get_players()
+    card_x, card_y = 32, 18
+    name_x, name_y = 44, 86
+    score_x, score_y = 44, 126
+    counter = 1
+    for id, data in players.items():
+        name = lalezar_30.render(data['name'],1,'black')
+        score = lalezar_30.render(str(data['score']),1,'black')
+        player_card_holder = 'player_card_' + str(counter)
+        SCREEN.blit(images[player_card_holder],(card_x,card_y))
+        SCREEN.blit(name,(name_x,name_y))
+        SCREEN.blit(score,(score_x,score_y))
+        card_y += 192
+        name_y += 192
+        score_y += 192
+        counter += 1
     
     
 # Scrolling background effect
@@ -609,6 +634,30 @@ def player_name():
             else: 
                 enter_btn_hovered = False
                 
+        pygame.display.update()
+        clock.tick(FPS)
+
+def end_screen(game:Game):
+    while True:
+        lmb_clicked = False
+        player_name_value = name_input.value
+        events = pygame.event.get()
+        
+        for event in events:
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    lmb_clicked = True
+            if event.type == bg_timer:
+                scroll_bg()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN and player_name_value != '':
+                    main_menu()
+
+        draw_leaderboard(game)
+
         pygame.display.update()
         clock.tick(FPS)
 
