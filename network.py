@@ -29,14 +29,18 @@ class Network:
     
     def send_and_receive(self, data):
         try:
-            self.client.sendall(str.encode(data))
+            if not isinstance(data, str):
+                data = str(data)
+            self.client.sendall(data.encode('utf-8'))
             return self.receive_pickle()
         except socket.error as e:
             print(e)
             
     def send(self, data):
         try:
-            self.client.sendall(str.encode(data))
+            if not isinstance(data, str):
+                data = str(data)
+            self.client.sendall(data.encode('utf-8'))
         except socket.error as e:
             print(e)
     
