@@ -205,15 +205,15 @@ class Server:
         elif 'index' in data:
             print(f'index request received from {ip}')
             conn.sendall(pickle.dumps(index))
-            game.increment_sent_index()
+            # game.increment_sent_index()
         # else: conn.sendall(pickle.dumps(''))
         
         print(f'!!! {data} from {ip}')
 
-        # Server will not receive messages from the client until all
-        # players have been sent the index of the next question
-        while True:
-            if game.count_sent_index() == game.get_player_count(): return
+        # # Server will not receive messages from the client until all
+        # # players have been sent the index of the next question
+        # while True:
+        #     if game.count_sent_index() == game.get_player_count(): return
             
     def handle_endgame(self, conn:socket.socket, game:Game):
         # Send Game to client so they can display leaderboard
