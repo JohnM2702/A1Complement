@@ -223,8 +223,8 @@ def loading(game: Game):
         waiting = game.get_player_count() < game.get_player_size()
 
     pygame.time.set_timer(loading_timer, 0) # Disable timer
-    #game_proper(game)
-    end_screen(game)
+    game_proper(game)
+    #end_screen(game)
 
 
 def fetch_games():
