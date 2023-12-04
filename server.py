@@ -61,7 +61,7 @@ class Server:
         
         return game, game_id
         
-    def join_game(self, game, game_id, data):
+    def join_game(self, game:Game, game_id, data):
         ip = data[2]
         name = data[3]
         game.add_player(ip, name, 0)
@@ -71,48 +71,45 @@ class Server:
     
     
     def threaded_client(self, conn:socket.socket, addr):
-        game = None 
         try:
-            # PREGAME: client will either create a new game,
-            # view existing games, or join a game
-            game, game_id = self.handle_pregame(conn)
+            while True:
+                game = None 
 
-            # Client has joined a game, so send them the Game object
-            conn.sendall(pickle.dumps(game))
-            
-            # Client will now wait for other players to join
-            self.handle_waiting(conn,game)
-            
-            # Play the actual game
-            self.handle_game(conn,game,addr[0])
-        
+                # PREGAME: client will either create a new game,
+                # view existing games, or join a game
+                game, game_id = self.handle_pregame(conn)
+                
+                try:
+                    # Client just joined a game, send them the Game object
+                    conn.sendall(pickle.dumps(game))
+                    
+                    # WAITING: Wait for other players to join
+                    self.handle_waiting(conn,game)
+                    
+                    # GAME: Play the actual game
+                    self.handle_game(conn,game,addr[0])
+
+                    # ENDGAME: Show leaderboard
+                    self.handle_endgame(conn,game)
+
+                except socket.error as e:
+                    print(f"ERROR: {e}")
+                finally: 
+                    self.delete_player(game,game_id,addr[0])
+
         except socket.error as e:
             print(f"ERROR: {e}")
-        
         except Exception as e:
             print(f"ERROR: {e}")
-        
         finally: 
-            if game is not None:
-                # Delete the player from the list of players in the Game object
-                game.delete_player(addr[0])
-                player_count = game.get_player_count()
-                # Delete the game if there is only 1 or no players left
-                if (player_count <= 1 and game.has_started()) or player_count == 0:
-                    try: 
-                        del self.games[game_id]
-                        print(f'Deleting Game {game_id}')
-                    except: pass
-            # Delete the client from the list of clients in the server
-            del self.clients[addr[0]]
-            print(f'{addr[0]} has disconnected')
-            conn.close()
+            self.handle_disconnection(game,game_id,addr[0],conn)
     
     
     def handle_pregame(self, conn: socket.socket) -> tuple[Game,int]:
         while True:
             data = conn.recv(2048).decode().split(',')
-    
+            if not data: raise socket.error('lost connection')
+            
             if data[0] == 'create':
                 print('create request received')     
                 if len(self.games) < 6:
@@ -199,8 +196,7 @@ class Server:
             
             index += 1
             if index == game.get_qna_length():
-                print('Game Over')
-                break
+                print(f'Game {game.get_id()} has ended')
     
     
     def handle_round_transition(self, conn:socket.socket, game:Game, index:int, ip:str):
@@ -212,11 +208,20 @@ class Server:
             game.increment_sent_index()
         # else: conn.sendall(pickle.dumps(''))
         
-        print(f'wow {data} from {ip}')
+        print(f'!!! {data} from {ip}')
 
+        # Server will not receive messages from the client until all
+        # players have been sent the index of the next question
         while True:
             if game.count_sent_index() == game.get_player_count(): return
             
+    def handle_endgame(self, conn:socket.socket, game:Game):
+        # Send Game to client so they can display leaderboard
+        conn.sendall(pickle.dumps(game))
+        data = conn.recv(2048).decode()
+        if data == 'exit':
+            return 
+        
     def broadcast_with_exclusion(self, message, excluded):
         for ip, client in self.clients.items():
             if ip is not excluded:
@@ -239,19 +244,24 @@ class Server:
     #         print(f"ERROR: {e}")
     #         self.handle_disconnection(game,game.get_id(),ip,conn)
 
-    # def handle_disconnection(self, game, game_id, ip, conn):
-    #     if game is not None:
-    #         game.delete_player(ip)
-    #         player_count = game.get_player_count()
-    #         if (player_count <= 1 and game.has_started()) or player_count == 0:
-    #             try: 
-    #                 del self.games[game_id]
-    #                 print(f'Deleting Game {game_id}')
-    #             except: pass
-            
-    #     del self.clients[ip]
-    #     print(f'{ip} has disconnected')
-    #     conn.close()
+    def delete_player(self, game:Game, game_id, ip):
+        if game is not None:
+            # Delete the player from the list of players in the Game object
+            game.delete_player(ip)
+            player_count = game.get_player_count()
+            # Delete the game if there is only 1 or no players left
+            if (player_count <= 1 and game.has_started()) or player_count == 0:
+                try: 
+                    del self.games[game_id]
+                    print(f'Deleting Game {game_id}')
+                except: pass    # If another client deleted the game first
+
+    def handle_disconnection(self, game:Game, game_id, ip, conn:socket.socket):
+        self.delete_player(game,game_id,ip)  
+        # Delete the client from the list of clients in the server
+        del self.clients[ip]
+        print(f'{ip} has disconnected')
+        conn.close()
 
     # def send_game_to_all(self, game:Game):
     #     for client in game.players.keys():
