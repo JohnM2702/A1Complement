@@ -583,11 +583,53 @@ def main_menu():
         
         pygame.display.update()
         clock.tick(FPS)
-        
+
+def animate_player_card(card,card_alpha,pos_x,pos_y,counter,alpha,frames):
+    if counter < 2:
+        if counter == 0:             
+                
+            card_1_with_alpha = images[card].convert_alpha()
+            card_1_with_alpha.set_alpha(alpha)
+
+            card_2_with_alpha = images[card_alpha].convert_alpha()
+            card_2_with_alpha.set_alpha(255 - alpha)
+
+            #SCREEN.blit(images[card],(pos_x,pos_y))
+            SCREEN.blit(card_1_with_alpha,(pos_x,pos_y - frames))
+            SCREEN.blit(card_2_with_alpha,(pos_x,pos_y - frames))
+
+            alpha -= 13
+            if alpha < 0:
+                alpha = 0
+                counter += 1
+                
+        elif counter == 1:
+                
+            card_1_with_alpha = images[card_alpha].convert_alpha()
+            card_1_with_alpha.set_alpha(255 - alpha)
+
+            card_2_with_alpha = images[card].convert_alpha()
+            card_2_with_alpha.set_alpha(alpha)
+
+
+            #SCREEN.blit(images[card],(pos_x,pos_y))
+            SCREEN.blit(card_1_with_alpha,(pos_x,pos_y  - (40 - frames)))
+            SCREEN.blit(card_2_with_alpha,(pos_x,pos_y  - (40 - frames)))
+
+            alpha += 16
+            if alpha > 275:
+                counter += 1
+    else:
+        SCREEN.blit(images[card],(pos_x,pos_y))
+
+    return counter, alpha
 
 def player_name():
     enter_btn_hovered = False
-
+    flag = 0
+    alpha = 255
+    counter = 0
+    frames = 0
     while True:
         lmb_clicked = False
         player_name_value = name_input.value
@@ -615,7 +657,12 @@ def player_name():
         # Namebox and Button
         SCREEN.blit(images['name_box'],name_box_rect)
         SCREEN.blit(images['enter_btn'],enter_btn_rect)
- 
+
+        # animation should be shown locally sobberns
+        counter, alpha = animate_player_card('player_card_4','player_card_4_alpha',0,400,counter,alpha,frames)
+        frames += 1        
+
+        
         # Render player name on the screen
         player_name_surf = name_input.surface
         player_name_rect = player_name_surf.get_rect(center=(WIDTH/2,517))
