@@ -21,6 +21,7 @@ BEIGE = '#E1D4BB'
 # Fonts
 inria_20 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),20)
 inria_50 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),50)
+inria_40 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),40)
 inria_50.align = pygame.FONT_CENTER
 inria_italic_20 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Italic.ttf'),20)
 inria_italic_40 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Italic.ttf'),40)
@@ -51,8 +52,10 @@ loading_bg_rect = images['loading_bg'].get_rect(topleft=(269,384))
 enter_btn_rect = images['enter_btn'].get_rect(topleft=(401,570))
 name_box_rect = images['name_box'].get_rect(topleft=(355,487))
 
-congrats_label = images['congrats_label'].get_rect(topleft=(294,194))
-win_label = images['congrats_label_2'].get_rect(topleft=(485,367))
+exit_game_btn_rect = images['exit_game_btn'].get_rect(topleft=(491,481))
+
+congrats_label_rect = images['congrats_label'].get_rect(topleft=(294,194))
+win_label_rect = images['congrats_label_2'].get_rect(topleft=(485,367))
 
 pcard_width, pcard_height = images['player_card'].get_size()
 gbox_width, gbox_height = images['game_box'].get_size()
@@ -220,8 +223,8 @@ def loading(game: Game):
         waiting = game.get_player_count() < game.get_player_size()
 
     pygame.time.set_timer(loading_timer, 0) # Disable timer
-    game_proper(game)
-    #end_screen(game)
+    #game_proper(game)
+    end_screen(game)
 
 
 def fetch_games():
@@ -638,6 +641,8 @@ def player_name():
         clock.tick(FPS)
 
 def end_screen(game:Game):
+    highlight_name = "John Kekow"
+    
     while True:
         lmb_clicked = False
         player_name_value = name_input.value
@@ -656,6 +661,32 @@ def end_screen(game:Game):
                 if event.key == pygame.K_RETURN and player_name_value != '':
                     main_menu()
 
+        # Draw the screen
+        draw_bg(bg=images['game_bg'], draw_logo=False,color=BLUE)
+
+        # need to call the highest score from sever
+        # Label
+        window_label = inria_italic_40.render(highlight_name,1,'Black')
+        SCREEN.blit(window_label,(516,308))
+
+        SCREEN.blit(images['congrats_label'], congrats_label_rect)
+        SCREEN.blit(images['congrats_label_2'], win_label_rect)
+
+
+        mx, my = pygame.mouse.get_pos()
+        # Handle button hover & sfx
+        if exit_game_btn_rect.collidepoint(mx, my):
+            if not enter_btn_hovered:
+                btn_sfx.play()
+                enter_btn_hovered = True
+            SCREEN.blit(images['exit_game_hover'], exit_game_btn_rect)
+            if lmb_clicked:
+                main_menu()
+        else: 
+            enter_btn_hovered = False
+            SCREEN.blit(images['exit_game_btn'], exit_game_btn_rect)
+        
+        # need to also send score to players yeet
         draw_leaderboard(game)
 
         pygame.display.update()
