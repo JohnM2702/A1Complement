@@ -79,3 +79,16 @@ class Network:
                 # Continue receiving data until a complete pickled object is obtained
                 continue
                       
+def net_test(server_ip):
+    # Assuming port is 5566
+    x = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    x.settimeout(1)
+    
+    port = 5566
+    addr = (server_ip, port)
+    try:
+        x.connect(addr)
+        x.close()
+        return True
+    except:
+        return False

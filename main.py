@@ -1,7 +1,7 @@
 from asset_loader import load_images
 from pygame_textinput import *
 from threading import Thread
-from network import Network
+from network import Network, net_test
 from game import Game
 from sys import exit
 import pygame, os
@@ -12,9 +12,6 @@ WIDTH,HEIGHT = 1024,768
 SCREEN = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Guessing Galore")
 clock = pygame.time.Clock()
-# server_ip = '172.16.5.152'
-server_ip = '192.168.1.3'
-network = Network(server_ip)
 
 # Colors
 BLUE = '#537188'
@@ -680,6 +677,74 @@ def player_name():
         pygame.display.update()
         clock.tick(FPS)
 
+def ip_input_scene():
+    enter_btn_hovered = False
+    flag = 0
+    alpha = 255
+    counter = 0
+    frames = 0
+    
+    manager = TextInputManager(validator=lambda input: len(input) <= 15)
+    ip_input = TextInputVisualizer(manager,lalezar_50,cursor_width=0)
+    
+    while True:
+        lmb_clicked = False
+        ip_value = ip_input.value
+        events = pygame.event.get()
+        
+        for event in events:
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    lmb_clicked = True
+            if event.type == bg_timer:
+                scroll_bg()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN and ip_value != '':
+                    if net_test(ip_value):
+                        return ip_value
+
+        draw_bg(images['loading_bg'],loading_bg_rect)
+
+        # Label
+        window_label = inria_italic_40.render("Enter Server IP",1,'Black')
+        SCREEN.blit(window_label,(365,419))
+        
+        # Namebox and Button
+        SCREEN.blit(images['name_box'],name_box_rect)
+        SCREEN.blit(images['enter_btn'],enter_btn_rect)
+
+        # animation should be shown locally sobberns
+        counter, alpha = animate_player_card('player_card_4','player_card_4_alpha',0,400,counter,alpha,frames)
+        frames += 1        
+
+        
+        # Render player name on the screen
+        ip_surf = ip_input.surface
+        ip_rect = ip_surf.get_rect(center=(WIDTH/2,517))
+        SCREEN.blit(ip_input.surface,ip_rect)
+        ip_input.update(events)
+
+        mx, my = pygame.mouse.get_pos()
+        
+        # Handle button hover & sfx
+        if ip_value != '':
+            if enter_btn_rect.collidepoint(mx, my):
+                if not enter_btn_hovered:
+                    btn_sfx.play()
+                    enter_btn_hovered = True
+                SCREEN.blit(images['enter_btn_hover'], enter_btn_rect)
+                if lmb_clicked:
+                    if net_test(ip_value):
+                        return ip_value
+            else: 
+                enter_btn_hovered = False
+                
+        pygame.display.update()
+        clock.tick(FPS) 
+
 def end_screen(game:Game):
     highlight_name = "John Kekow"
     
@@ -732,5 +797,6 @@ def end_screen(game:Game):
         pygame.display.update()
         clock.tick(FPS)
 
-
+server_ip = ip_input_scene()
+network = Network(server_ip)
 player_name()
