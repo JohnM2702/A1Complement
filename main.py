@@ -35,6 +35,8 @@ name_input = TextInputVisualizer(manager,lalezar_30,cursor_blink_interval=750,cu
 # Sounds
 btn_sfx_click = pygame.mixer.Sound(os.path.join('assets','sfx','button_click.wav'))
 btn_sfx_hover = pygame.mixer.Sound(os.path.join('assets','sfx','button_hover.ogg'))
+sfx_error = pygame.mixer.Sound(os.path.join('assets','sfx','error.ogg'))
+
 
 
 # Images
@@ -692,7 +694,7 @@ def ip_input_scene():
     frames = 0
     
     manager = TextInputManager(validator=lambda input: len(input) <= 15)
-    ip_input = TextInputVisualizer(manager,lalezar_50,cursor_width=0)
+    ip_input = TextInputVisualizer(manager,lalezar_30,cursor_width=0)
     
     while True:
         lmb_clicked = False
@@ -713,6 +715,9 @@ def ip_input_scene():
                     btn_sfx_click.play()
                     if net_test(ip_value):
                         return ip_value
+                    else:
+                        sfx_error.play()
+                        ip_input.value = ""
 
         draw_bg(images['loading_bg'],loading_bg_rect)
 
@@ -748,6 +753,10 @@ def ip_input_scene():
                     btn_sfx_click.play()
                     if net_test(ip_value):
                         return ip_value
+                    else:
+                        sfx_error.play()
+                        ip_input.value = ""
+                        
             else: 
                 enter_btn_hovered = False
                 
