@@ -23,6 +23,7 @@ BEIGE = '#E1D4BB'
 # Fonts
 inria_20 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),20)
 inria_50 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),50)
+inria_40 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),40)
 inria_50.align = pygame.FONT_CENTER
 inria_italic_20 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Italic.ttf'),20)
 inria_italic_40 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Italic.ttf'),40)
@@ -52,6 +53,11 @@ number_three_rect = images['number_three'].get_rect(topleft=(447,522))
 loading_bg_rect = images['loading_bg'].get_rect(topleft=(269,384))
 enter_btn_rect = images['enter_btn'].get_rect(topleft=(401,570))
 name_box_rect = images['name_box'].get_rect(topleft=(355,487))
+
+exit_game_btn_rect = images['exit_game_btn'].get_rect(topleft=(491,481))
+
+congrats_label_rect = images['congrats_label'].get_rect(topleft=(294,194))
+win_label_rect = images['congrats_label_2'].get_rect(topleft=(485,367))
 
 pcard_width, pcard_height = images['player_card'].get_size()
 gbox_width, gbox_height = images['game_box'].get_size()
@@ -220,6 +226,7 @@ def loading(game: Game):
 
     pygame.time.set_timer(loading_timer, 0) # Disable timer
     game_proper(game)
+    #end_screen(game)
 
 
 def fetch_games():
@@ -460,15 +467,36 @@ def draw_players(game:Game):
     card_x, card_y = 23, 494
     name_x, name_y = 35, 562
     score_x, score_y = 35, 602
+    counter = 1
     for id, data in players.items():
         name = lalezar_30.render(data['name'],1,'black')
         score = lalezar_30.render(str(data['score']),1,'black')
-        SCREEN.blit(images['player_card'],(card_x,card_y))
+        player_card_holder = 'player_card_' + str(counter)
+        SCREEN.blit(images[player_card_holder],(card_x,card_y))
         SCREEN.blit(name,(name_x,name_y))
         SCREEN.blit(score,(score_x,score_y))
         card_x += 248
         name_x += 248
         score_x += 248
+        counter += 1
+
+def draw_leaderboard(game:Game):
+    players = game.get_players()
+    card_x, card_y = 32, 18
+    name_x, name_y = 44, 86
+    score_x, score_y = 44, 126
+    counter = 1
+    for id, data in players.items():
+        name = lalezar_30.render(data['name'],1,'black')
+        score = lalezar_30.render(str(data['score']),1,'black')
+        player_card_holder = 'player_card_' + str(counter)
+        SCREEN.blit(images[player_card_holder],(card_x,card_y))
+        SCREEN.blit(name,(name_x,name_y))
+        SCREEN.blit(score,(score_x,score_y))
+        card_y += 192
+        name_y += 192
+        score_y += 192
+        counter += 1
     
     
 # Scrolling background effect
@@ -548,11 +576,53 @@ def main_menu():
         
         pygame.display.update()
         clock.tick(FPS)
-        
+
+def animate_player_card(card,card_alpha,pos_x,pos_y,counter,alpha,frames):
+    if counter < 2:
+        if counter == 0:             
+                
+            card_1_with_alpha = images[card].convert_alpha()
+            card_1_with_alpha.set_alpha(alpha)
+
+            card_2_with_alpha = images[card_alpha].convert_alpha()
+            card_2_with_alpha.set_alpha(255 - alpha)
+
+            #SCREEN.blit(images[card],(pos_x,pos_y))
+            SCREEN.blit(card_1_with_alpha,(pos_x,pos_y - frames))
+            SCREEN.blit(card_2_with_alpha,(pos_x,pos_y - frames))
+
+            alpha -= 13
+            if alpha < 0:
+                alpha = 0
+                counter += 1
+                
+        elif counter == 1:
+                
+            card_1_with_alpha = images[card_alpha].convert_alpha()
+            card_1_with_alpha.set_alpha(255 - alpha)
+
+            card_2_with_alpha = images[card].convert_alpha()
+            card_2_with_alpha.set_alpha(alpha)
+
+
+            #SCREEN.blit(images[card],(pos_x,pos_y))
+            SCREEN.blit(card_1_with_alpha,(pos_x,pos_y  - (40 - frames)))
+            SCREEN.blit(card_2_with_alpha,(pos_x,pos_y  - (40 - frames)))
+
+            alpha += 16
+            if alpha > 275:
+                counter += 1
+    else:
+        SCREEN.blit(images[card],(pos_x,pos_y))
+
+    return counter, alpha
 
 def player_name():
     enter_btn_hovered = False
-
+    flag = 0
+    alpha = 255
+    counter = 0
+    frames = 0
     while True:
         lmb_clicked = False
         player_name_value = name_input.value
@@ -580,7 +650,12 @@ def player_name():
         # Namebox and Button
         SCREEN.blit(images['name_box'],name_box_rect)
         SCREEN.blit(images['enter_btn'],enter_btn_rect)
- 
+
+        # animation should be shown locally sobberns
+        counter, alpha = animate_player_card('player_card_4','player_card_4_alpha',0,400,counter,alpha,frames)
+        frames += 1        
+
+        
         # Render player name on the screen
         player_name_surf = name_input.surface
         player_name_rect = player_name_surf.get_rect(center=(WIDTH/2,517))
@@ -602,6 +677,58 @@ def player_name():
             else: 
                 enter_btn_hovered = False
                 
+        pygame.display.update()
+        clock.tick(FPS)
+
+def end_screen(game:Game):
+    highlight_name = "John Kekow"
+    
+    while True:
+        lmb_clicked = False
+        player_name_value = name_input.value
+        events = pygame.event.get()
+        
+        for event in events:
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    lmb_clicked = True
+            if event.type == bg_timer:
+                scroll_bg()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN and player_name_value != '':
+                    main_menu()
+
+        # Draw the screen
+        draw_bg(bg=images['game_bg'], draw_logo=False,color=BLUE)
+
+        # need to call the highest score from sever
+        # Label
+        window_label = inria_italic_40.render(highlight_name,1,'Black')
+        SCREEN.blit(window_label,(516,308))
+
+        SCREEN.blit(images['congrats_label'], congrats_label_rect)
+        SCREEN.blit(images['congrats_label_2'], win_label_rect)
+
+
+        mx, my = pygame.mouse.get_pos()
+        # Handle button hover & sfx
+        if exit_game_btn_rect.collidepoint(mx, my):
+            if not enter_btn_hovered:
+                btn_sfx.play()
+                enter_btn_hovered = True
+            SCREEN.blit(images['exit_game_hover'], exit_game_btn_rect)
+            if lmb_clicked:
+                main_menu()
+        else: 
+            enter_btn_hovered = False
+            SCREEN.blit(images['exit_game_btn'], exit_game_btn_rect)
+        
+        # need to also send score to players yeet
+        draw_leaderboard(game)
+
         pygame.display.update()
         clock.tick(FPS)
 
