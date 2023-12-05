@@ -33,7 +33,9 @@ manager = TextInputManager(validator=lambda input: len(input) <= 15)
 name_input = TextInputVisualizer(manager,lalezar_30,cursor_blink_interval=750,cursor_width=2)
 
 # Sounds
-btn_sfx = pygame.mixer.Sound(os.path.join('assets','sfx','button_hover.wav'))
+btn_sfx_click = pygame.mixer.Sound(os.path.join('assets','sfx','button_click.wav'))
+btn_sfx_hover = pygame.mixer.Sound(os.path.join('assets','sfx','button_hover.ogg'))
+
 
 # Images
 images: dict[str,pygame.Surface] = load_images()
@@ -128,13 +130,14 @@ def define_player_window():
             SCREEN.blit(rect[0],rect[2])
             if rect[2].collidepoint(mx,my):
                 if not rect[3]:
-                    btn_sfx.play()
+                    btn_sfx_hover.play()
                     rect[3] = True 
                     for other_rect in btn_rects:
                         if other_rect is not rect:
                             other_rect[3] = False
                 SCREEN.blit(rect[1],rect[2]) 
                 if lmb_clicked:
+                    btn_sfx_click.play()
                     running = False
                     create_game(rect[4])
             else: 
@@ -291,6 +294,7 @@ def view_games():
                 if rect[0].collidepoint(mx,my): 
                     SCREEN.blit(images['game_box_hover'],rect[0])
                     if lmb_clicked:
+                        btn_sfx_click.play()
                         join_game(rect[4])
                 else: 
                     SCREEN.blit(images['game_box'],rect[0])
@@ -547,13 +551,14 @@ def main_menu():
             if name_input.value != '':
                 if rect[2].collidepoint(mx,my):
                     if rect[3] is False:
-                        btn_sfx.play()
+                        btn_sfx_hover.play()
                         rect[3] = True
                         for other_rect in btn_rects:
                             if other_rect is not rect:
                                 other_rect[3] = False 
                     SCREEN.blit(rect[1],rect[2])
                     if lmb_clicked:
+                        btn_sfx_click.play()
                         if rect[0] is images['create_btn']:
                             define_player_window()
                         elif rect[0] is images['join_btn']:
@@ -665,10 +670,11 @@ def player_name():
         if player_name_value != '':
             if enter_btn_rect.collidepoint(mx, my):
                 if not enter_btn_hovered:
-                    btn_sfx.play()
+                    btn_sfx_hover.play()
                     enter_btn_hovered = True
                 SCREEN.blit(images['enter_btn_hover'], enter_btn_rect)
                 if lmb_clicked:
+                    btn_sfx_click.play()
                     print(player_name_value,"has opened the game")
                     main_menu()
             else: 
@@ -733,10 +739,11 @@ def ip_input_scene():
         if ip_value != '':
             if enter_btn_rect.collidepoint(mx, my):
                 if not enter_btn_hovered:
-                    btn_sfx.play()
+                    btn_sfx_hover.play()
                     enter_btn_hovered = True
                 SCREEN.blit(images['enter_btn_hover'], enter_btn_rect)
                 if lmb_clicked:
+                    btn_sfx_click.play()
                     if net_test(ip_value):
                         return ip_value
             else: 
@@ -782,10 +789,11 @@ def end_screen(game:Game):
         # Handle button hover & sfx
         if exit_game_btn_rect.collidepoint(mx, my):
             if not enter_btn_hovered:
-                btn_sfx.play()
+                btn_sfx_hover.play()
                 enter_btn_hovered = True
             SCREEN.blit(images['exit_game_hover'], exit_game_btn_rect)
             if lmb_clicked:
+                btn_sfx_click.play()
                 main_menu()
         else: 
             enter_btn_hovered = False
