@@ -641,6 +641,7 @@ def player_name():
                 scroll_bg()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN and player_name_value != '':
+                    btn_sfx_click.play()
                     main_menu()
 
         draw_bg(images['loading_bg'],loading_bg_rect)
@@ -670,12 +671,12 @@ def player_name():
         if player_name_value != '':
             if enter_btn_rect.collidepoint(mx, my):
                 if not enter_btn_hovered:
-                    btn_sfx_hover.play()
                     enter_btn_hovered = True
+                    btn_sfx_hover.play()
                 SCREEN.blit(images['enter_btn_hover'], enter_btn_rect)
                 if lmb_clicked:
-                    btn_sfx_click.play()
                     print(player_name_value,"has opened the game")
+                    btn_sfx_click.play()
                     main_menu()
             else: 
                 enter_btn_hovered = False
@@ -709,6 +710,7 @@ def ip_input_scene():
                 scroll_bg()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN and ip_value != '':
+                    btn_sfx_click.play()
                     if net_test(ip_value):
                         return ip_value
 
@@ -771,6 +773,7 @@ def end_screen(game:Game):
                 scroll_bg()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN and player_name_value != '':
+                    btn_sfx_click.play()
                     main_menu()
 
         # Draw the screen
