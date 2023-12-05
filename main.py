@@ -1,7 +1,7 @@
+from network import Network, net_test
 from asset_loader import load_images
 from pygame_textinput import *
 from threading import Thread
-from network import Network, net_test
 from game import Game
 from sys import exit
 import pygame, os
