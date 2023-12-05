@@ -1,8 +1,9 @@
 from asset_loader import load_images
 from pygame_textinput import *
+from threading import Thread
 from network import Network
 from game import Game
-from sys import exit 
+from sys import exit
 import pygame, os
 
 pygame.init()
@@ -11,7 +12,8 @@ WIDTH,HEIGHT = 1024,768
 SCREEN = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Guessing Galore")
 clock = pygame.time.Clock()
-server_ip = '192.168.1.13'
+# server_ip = '172.16.5.152'
+server_ip = '192.168.1.3'
 network = Network(server_ip)
 
 # Colors
@@ -319,8 +321,18 @@ def send_message(message, receive=True):
         network.send(message)
     except Exception as e:
         print(f'Failed to send message: {e}')
-    
-    
+
+def request_index(message):
+    while True:
+        try:
+            data = network.send_and_receive(message[0])
+            if isinstance(data,int):
+                print(f'received index {data}')
+                message[0] = data
+                break
+        except Exception as e:
+            print(f'Failed to request index: {e}')
+
 def game_proper(game: Game):
     # Temporary max input length
     # ideal: dynamically set when client can receive answers from server
@@ -329,6 +341,8 @@ def game_proper(game: Game):
     
     QnA = game.get_qna()
     round_score = 0
+    index = 0   # test
+    data = None
     
     while True:
         data = send_message('index')
@@ -340,9 +354,8 @@ def game_proper(game: Game):
     pygame.time.set_timer(round_timer,time_limit,1)
     timer_start_time = pygame.time.get_ticks()
     score_sent = False
-    timer_stopped = False   # nfgdfgl
-    index = 0   # test
-    time_limit = 10000
+    timer_stopped = False  
+    thread_started = False
     
     ongoing = True
     
@@ -358,10 +371,8 @@ def game_proper(game: Game):
             # if event.type == pygame.KEYDOWN:    # Back to main menu (temp only!)
             #     if event.key == pygame.K_ESCAPE:
             #         ongoing = False
-            if event.type == round_timer:
-                # time's up
-                if not score_sent: 
-                    # didnt guess correctly within the time limit
+            if event.type == round_timer:   # time's up
+                if not score_sent: # didnt guess correctly within the time limit
                     data = send_message(f'score,{round_score}')
                     if isinstance(data,Game): game = data
                     score_sent = True
@@ -369,51 +380,23 @@ def game_proper(game: Game):
                 time_limit = 10000
                 timer_stopped = True
                 
-        # if timer_stopped:
-        #     try:
-        #         data = receive_game_data()
-        #         if data == 'next round':
-        #             data = network.send('index')
-        #     except Exception as e: 
-        #         print(f'Failed to request index: {e}')
-        #     # print(str(data))
-        #     print(str(type(data)) + f' data is: {data}')
-        #     if isinstance(data,int): 
-        #         index = data
-        #         pygame.time.set_timer(round_timer,time_limit,1)
-        #         timer_start_time = pygame.time.get_ticks()
-        #         timer_stopped = False
-        #         score_sent = False
-        #     # elif isinstance(data,Game): game = data
-        # else: 
-        #     data = receive_game_data()
-        #     if isinstance(data,Game): game = data
-        
         if timer_stopped:
-            data = send_message('index')
-            if isinstance(data,int): 
-                index = data
+            if not thread_started:
+                print('starting thread')
+                request = ['index']
+                thread = Thread(target=request_index, args=(request,))
+                thread.start()
+                thread_started = True
+            if isinstance(request[0],int): 
+                index = request[0]
                 pygame.time.set_timer(round_timer,time_limit,1)
                 timer_start_time = pygame.time.get_ticks()
                 timer_stopped = False
                 score_sent = False
+                thread_started = False
         else:
             data = receive_game_data()
             if isinstance(data,Game): game = data 
-            
-        # data = receive_game_data()
-        # if isinstance(data,Game): game = data 
-        # elif isinstance(data,str) and data == 'next round':
-        #     data = send_message('get index')
-        #     if isinstance(data,int): 
-        #         index = data
-        #         pygame.time.set_timer(round_timer,time_limit,1)
-        #         timer_start_time = pygame.time.get_ticks()
-        #         # timer_stopped = False
-        #         score_sent = False
-        
-        # print(str(type(data)) + f' data is: {data}')
-        
                     
         draw_bg(bg=images['game_bg'],draw_logo=False,color=BLUE)
         SCREEN.blit(images['question_box'],(23,18))
@@ -437,12 +420,22 @@ def game_proper(game: Game):
             data = send_message(f'score,{round_score}')
             if isinstance(data,Game): game = data
             score_sent = True
-            # round_score = 0
-            
-        # if index > 
-        
+
         pygame.display.update()
         clock.tick(FPS)
+
+def leaderboard():
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == bg_timer:
+                scroll_bg()
+
+        draw_bg(bg=images['game_bg'],draw_logo=True,color=BLUE)
+
+        
 
 
 def receive_game_data():

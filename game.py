@@ -1,10 +1,9 @@
 class Game:
     def __init__(self, id, player_size):
-        # self.type = ''    # image / trivia
         self.QnA = []
         self.started = False
+        self.ended = False
         self.round_scores_count = 0 # How many players sent their score at the end of a round
-        # self.sent_index = 0 # How many players have been sent the index of the next question
         self.rounds = [0 for _ in range (10)]   # 0: not finished, 1: finished
         self.id = id
         self.player_size = int(player_size)
@@ -55,7 +54,6 @@ class Game:
         if self.round_scores_count >= self.get_player_count():
             self.round_scores_count = 0
             self.rounds[index] = 1
-            # self.sent_index = 0
     
     def get_score(self, ip):
         return self.players[ip]['score']
@@ -63,8 +61,8 @@ class Game:
     def is_round_finished(self, index):
         return self.rounds[index]
 
-    # def increment_sent_index(self):
-    #     self.sent_index += 1
-    
-    # def count_sent_index(self):
-    #     return self.sent_index
+    def end_game(self):
+        self.ended = False
+
+    def is_finished(self):
+        return False if 0 in self.rounds else True

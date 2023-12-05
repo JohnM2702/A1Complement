@@ -1,10 +1,9 @@
+from questions import Q_and_A
+from game import Game
+import threading
 import socket
 import pickle
 import random
-import threading
-from game import Game
-from time import sleep
-from questions import Q_and_A
 
 class Server:
     def __init__(self) -> None:
@@ -73,7 +72,7 @@ class Server:
     def threaded_client(self, conn:socket.socket, addr):
         try:
             while True:
-                game = None 
+                game, game_id = None, None
 
                 # PREGAME: client will either create a new game,
                 # view existing games, or join a game
@@ -151,22 +150,6 @@ class Server:
             # Send index of next question
             self.handle_round_transition(conn,game,index,ip)
             
-            # data = conn.recv(2048).decode().split(',')
-            # if not data: raise socket.error('lost connection')
-        
-            # elif data[0] == 'index':
-            #     print(f'index request received from {ip}')
-            #     conn.sendall(pickle.dumps(index))
-            #     game.increment_sent_index()
-            # else: conn.sendall(pickle.dumps(''))
-            
-            # print(f'wow {data} from {ip}')
-            
-            # # print(str(data))
-            # # print(index)
-            # while True:
-            #     if game.count_sent_index() == game.get_player_count(): break
-            
             print(f'round {index} start {ip}')
             while not game.is_round_finished(index):
                 data = conn.recv(2048).decode().split(',')
@@ -187,33 +170,19 @@ class Server:
                     conn.sendall(pickle.dumps(''))
                 
             print(f'Round {index} is over, {ip}')
-            
-            # data = conn.recv(2048).decode()
-            # if not data: raise socket.error('lost connection')
-            # print(f'{data} from {ip}')
-            
-            # conn.sendall(pickle.dumps('next round'))
-            
             index += 1
             if index == game.get_qna_length():
                 print(f'Game {game.get_id()} has ended')
     
-    
     def handle_round_transition(self, conn:socket.socket, game:Game, index:int, ip:str):
-        data = conn.recv(2048).decode()
-        if not data: raise socket.error('lost connection')
-        elif 'index' in data:
-            print(f'index request received from {ip}')
-            conn.sendall(pickle.dumps(index))
-            # game.increment_sent_index()
-        # else: conn.sendall(pickle.dumps(''))
-        
-        print(f'!!! {data} from {ip}')
-
-        # # Server will not receive messages from the client until all
-        # # players have been sent the index of the next question
-        # while True:
-        #     if game.count_sent_index() == game.get_player_count(): return
+        while True:
+            data = conn.recv(2048).decode()
+            if not data: raise socket.error('lost connection')
+            elif 'index' in data:
+                print(f'index request received from {ip}')
+                conn.sendall(pickle.dumps(index))
+                break
+            print(f'!!! {data} from {ip}')
             
     def handle_endgame(self, conn:socket.socket, game:Game):
         # Send Game to client so they can display leaderboard
@@ -236,13 +205,6 @@ class Server:
                 client.sendall(pickle.dumps(message))
             except Exception as e:
                 print(f"[ERROR] {e}")
-                
-    # def send_game(self, game, ip, conn):
-    #     try:
-    #         conn.sendall(pickle.dumps(game))
-    #     except socket.error as e:
-    #         print(f"ERROR: {e}")
-    #         self.handle_disconnection(game,game.get_id(),ip,conn)
 
     def delete_player(self, game:Game, game_id, ip):
         if game is not None:
@@ -261,26 +223,7 @@ class Server:
         # Delete the client from the list of clients in the server
         del self.clients[ip]
         print(f'{ip} has disconnected')
-        conn.close()
-
-    # def send_game_to_all(self, game:Game):
-    #     for client in game.players.keys():
-    #         try:
-    #             conn = self.clients[client]
-    #             conn.sendall(pickle.dumps(game))
-    #         except Exception as e:
-    #             print(f"[ERROR] {e}")
-
-    # def broadcast_message(self, message):
-    #     for client in self.clients:
-    #         try:
-    #             if isinstance(message, str):
-    #                 data = message.encode(self.format)
-    #             else:
-    #                 data = pickle.dumps(message)
-    #             client["connection"].sendall(data)
-    #         except Exception as e:
-    #             print(f"[ERROR] {e}")    
+        conn.close() 
 
     def get_ip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
