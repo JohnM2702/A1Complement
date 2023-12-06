@@ -34,10 +34,10 @@ class Server:
 
         while True: 
             conn, addr = server.accept()
-            self.clients[addr[0]] = conn
             print("Connected to:", addr)
             thread = threading.Thread(target=self.threaded_client, args=(conn,addr))
             thread.start()
+            self.clients[addr[0]] = conn
     
     def create_game(self, data):
         player_size = data[1]
