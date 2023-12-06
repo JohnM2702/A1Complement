@@ -1,9 +1,11 @@
 from asset_loader import load_images
 from pygame_textinput import *
+from threading import Thread
 from network import Network
 from game import Game
-from sys import exit 
+from sys import exit
 import pygame, os
+from difflib import SequenceMatcher
 
 pygame.init()
 FPS = 60
@@ -11,7 +13,8 @@ WIDTH,HEIGHT = 1024,768
 SCREEN = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Guessing Galore")
 clock = pygame.time.Clock()
-network = Network()
+server_ip = '192.168.56.1'
+network = Network(server_ip)
 
 # Colors
 BLUE = '#537188'
@@ -215,6 +218,7 @@ def loading(game: Game):
         game = data
         waiting = game.get_player_count() < game.get_player_size()
 
+    pygame.time.set_timer(loading_timer, 0) # Disable timer
     game_proper(game)
 
 
@@ -317,8 +321,14 @@ def send_message(message, receive=True):
         network.send(message)
     except Exception as e:
         print(f'Failed to send message: {e}')
-    
-    
+
+def request_index(message):
+    try:
+        message[0] = network.send_and_receive(message[0])
+        return message
+    except Exception as e:
+        print(f'Failed to request index: {e}')
+
 def game_proper(game: Game):
     # Temporary max input length
     # ideal: dynamically set when client can receive answers from server
@@ -327,6 +337,8 @@ def game_proper(game: Game):
     
     QnA = game.get_qna()
     round_score = 0
+    index = 0   # test
+    data = None
     
     while True:
         data = send_message('index')
@@ -339,8 +351,6 @@ def game_proper(game: Game):
     timer_start_time = pygame.time.get_ticks()
     score_sent = False
     timer_stopped = False   # nfgdfgl
-    index = 0   # test
-    time_limit = 10000
     
     ongoing = True
     
@@ -388,13 +398,20 @@ def game_proper(game: Game):
         #     if isinstance(data,Game): game = data
         
         if timer_stopped:
-            data = send_message('index')
+            # data = send_message('index')
+            thread_started = False
+            if not thread_started:
+                data = ['index']
+                thread = Thread(target=send_message, args=(data,))
+                thread.start()
+                thread_started = True
             if isinstance(data,int): 
                 index = data
                 pygame.time.set_timer(round_timer,time_limit,1)
                 timer_start_time = pygame.time.get_ticks()
                 timer_stopped = False
                 score_sent = False
+                thread_started = False
         else:
             data = receive_game_data()
             if isinstance(data,Game): game = data 
@@ -410,7 +427,7 @@ def game_proper(game: Game):
         #         # timer_stopped = False
         #         score_sent = False
         
-        print(str(type(data)) + f' data is: {data}')
+        # print(str(type(data)) + f' data is: {data}')
         
                     
         draw_bg(bg=images['game_bg'],draw_logo=False,color=BLUE)
@@ -428,19 +445,39 @@ def game_proper(game: Game):
         answer_input.update(events)
         
         # guessed correctly before the time limit
+        # insert the answer verifier
         if answer_input.value == QnA[index][1] and not score_sent:
             elapsed_time = pygame.time.get_ticks() - timer_start_time
             if elapsed_time <= 5000: round_score = 100
             else: round_score = 50
+
+            # this returns a float pertaining to how similar the answer and the actual answer are
+            # max score: 100
+            similarity_result = SequenceMatcher(None, answer_input.value, QnA[index][1]).ratio() * 100
+            round_score += similarity_result
+
             data = send_message(f'score,{round_score}')
             if isinstance(data,Game): game = data
             score_sent = True
             # round_score = 0
-            
+
         # if index > 
         
         pygame.display.update()
         clock.tick(FPS)
+
+def leaderboard():
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == bg_timer:
+                scroll_bg()
+
+        draw_bg(bg=images['game_bg'],draw_logo=True,color=BLUE)
+
+        
 
 
 def receive_game_data():
@@ -486,7 +523,7 @@ def scroll_bg():
 
 def restart_network():
     global network 
-    network = Network()
+    network = Network(server_ip)
     
     
 def main_menu():
