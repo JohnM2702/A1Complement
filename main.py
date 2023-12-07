@@ -5,6 +5,7 @@ from threading import Thread
 from game import Game
 from sys import exit
 import pygame, os
+import random
 
 pygame.init()
 FPS = 60
@@ -37,6 +38,15 @@ btn_sfx_click = pygame.mixer.Sound(os.path.join('assets','sfx','button_click.wav
 btn_sfx_hover = pygame.mixer.Sound(os.path.join('assets','sfx','button_hover.ogg'))
 sfx_error = pygame.mixer.Sound(os.path.join('assets','sfx','error.ogg'))
 bgm_sound = pygame.mixer.Sound(os.path.join('assets','bgm','bgm.mp3'))
+
+type_1 = pygame.mixer.Sound(os.path.join('assets','sfx','type_1.mp3'))
+type_2 = pygame.mixer.Sound(os.path.join('assets','sfx','type_2.mp3'))
+type_3 = pygame.mixer.Sound(os.path.join('assets','sfx','type_3.mp3'))
+type_4 = pygame.mixer.Sound(os.path.join('assets','sfx','type_4.mp3'))
+
+screen_transition = pygame.mixer.Sound(os.path.join('assets','sfx','screen_transition.mp3'))
+correct = pygame.mixer.Sound(os.path.join('assets','sfx','correct.mp3'))
+victory = pygame.mixer.Sound(os.path.join('assets','sfx','victory.mp3'))
 
 # Images
 images: dict[str,pygame.Surface] = load_images()
@@ -75,6 +85,18 @@ pygame.time.set_timer(bg_timer,50)
 # Global Variables for Animation
 animate_flag = [0,0,0,0]
 animate_alpha = [255,255,255,255]
+catch_typing = ""
+typing_array = [type_1,type_2,type_3,type_4]
+
+def typing_sfx():
+    global catch_typing
+    global typing_array
+    while True:
+        scape = random.choice(typing_array)
+        if scape != catch_typing:
+            catch_typing = scape
+            catch_typing.play()
+            break
 
 
 def draw_bg(surface=None,rect=None,bg=images['menu_bg'],draw_logo=True,color=BEIGE):
@@ -209,6 +231,8 @@ def loading(game: Game):
         player_count_render = inria_italic_40.render(player_count_text, 1, 'Black')
         SCREEN.blit(player_count_render, (483, 500))
 
+        # end_screen(game)
+
         for i in range(0, len(loading_array)):
             selected_icon = images['loading_0'] if loading_array[i] == 0 else images['loading_1']
             SCREEN.blit(selected_icon, (358 + (67 * i), 576))
@@ -231,7 +255,6 @@ def loading(game: Game):
 
     pygame.time.set_timer(loading_timer, 0) # Disable timer
     game_proper(game)
-    #end_screen(game)
 
 
 def fetch_games():
@@ -384,6 +407,8 @@ def game_proper(game: Game):
             if event.type == pygame.KEYDOWN:    # Back to main menu (temp only!)
                 if event.key == pygame.K_RETURN:
                     print("yeet")
+                # typing_sfx should only appear when highlighted sob
+                typing_sfx()
             
             if event.type == round_timer:   # time's up
                 if not score_sent: # didnt guess correctly within the time limit
@@ -429,6 +454,7 @@ def game_proper(game: Game):
         # guessed correctly before the time limit
         if answer_input.value == QnA[index][1] and not score_sent:
             elapsed_time = pygame.time.get_ticks() - timer_start_time
+            correct.play()
             if elapsed_time <= 5000: round_score = 100
             else: round_score = 50
             data = send_message(f'score,{round_score}')
@@ -625,6 +651,7 @@ def animate_player_card(card,card_alpha,pos_x,pos_y,counter,alpha,frames):
     return counter, alpha
 
 def player_name():
+    screen_transition.play()
     enter_btn_hovered = False
     flag = 0
     alpha = 255
@@ -647,7 +674,10 @@ def player_name():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN and player_name_value != '':
                     btn_sfx_click.play()
+                    screen_transition.play()
                     main_menu()
+                # typing_sfx should only appear when highlighted sob
+                typing_sfx()
 
         draw_bg(images['loading_bg'],loading_bg_rect)
 
@@ -684,6 +714,7 @@ def player_name():
                 if lmb_clicked:
                     print(player_name_value,"has opened the game")
                     btn_sfx_click.play()
+                    screen_transition.play()
                     main_menu()
             else: 
                 enter_btn_hovered = False
@@ -725,6 +756,8 @@ def ip_input_scene():
                     else:
                         sfx_error.play()
                         ip_input.value = ""
+                # typing_sfx should only appear when highlighted sob
+                typing_sfx()
 
         draw_bg(images['loading_bg'],loading_bg_rect)
 
@@ -776,7 +809,7 @@ def end_screen(game:Game):
     highlight_name = "John Kekow"
     
     bgm_sound.stop()
-    
+    victory.play()    
     
     while True:
         lmb_clicked = False
@@ -802,8 +835,10 @@ def end_screen(game:Game):
 
         # need to call the highest score from sever
         # Label
-        window_label = inria_italic_40.render(highlight_name,1,'Black')
-        SCREEN.blit(window_label,(516,308))
+        window_label = inria_italic_40.render(highlight_name,2,'White')
+        text_w, text_h = window_label.get_size()
+        x_center = (691 - text_w) // 2
+        SCREEN.blit(window_label,(x_center+294,298))
 
         SCREEN.blit(images['congrats_label'], congrats_label_rect)
         SCREEN.blit(images['congrats_label_2'], win_label_rect)
