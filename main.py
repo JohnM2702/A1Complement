@@ -190,6 +190,7 @@ def create_game(player_size):
     
 
 def loading(game: Game):
+    global animate_flag
     pygame.time.set_timer(loading_timer, 830)  # every 50 frames (50/60)
     waiting = True
     loading_array = [0, 0, 0, 0, 0]
@@ -199,10 +200,9 @@ def loading(game: Game):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
-            # Handle this case later
-            # if event.type == pygame.KEYDOWN:
-            #     if event.key == pygame.K_ESCAPE:
-            #         running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    animate_flag[0] = 2
             if event.type == bg_timer:
                 scroll_bg()
             if event.type == loading_timer:
@@ -222,10 +222,6 @@ def loading(game: Game):
         game_number = lalezar_35.render(f'Game {game_id}', 1, 'black')
         game_number_rect = game_number.get_rect(center=(WIDTH/2,420))
         SCREEN.blit(game_number, game_number_rect)
-        
-        server_number = lalezar_35.render(f'Server: {network.get_ip()}', 1, 'black')
-        server_number_rect = server_number.get_rect(center=(WIDTH/2,694))
-        SCREEN.blit(server_number, server_number_rect)
 
         waiting_label = inria_italic_40.render('Waiting for Players', 1, 'black')
         SCREEN.blit(waiting_label, (347, 444))
@@ -236,11 +232,11 @@ def loading(game: Game):
         player_count_render = inria_italic_40.render(player_count_text, 1, 'Black')
         SCREEN.blit(player_count_render, (483, 500))
 
-        # end_screen(game)
 
         for i in range(0, len(loading_array)):
             selected_icon = images['loading_0'] if loading_array[i] == 0 else images['loading_1']
             SCREEN.blit(selected_icon, (358 + (67 * i), 576))
+            
 
         pygame.display.update()
         clock.tick(FPS)
@@ -256,6 +252,7 @@ def loading(game: Game):
             continue
         
         game = data
+        
         waiting = game.get_player_count() < game.get_player_size()
 
     pygame.time.set_timer(loading_timer, 0) # Disable timer
@@ -499,16 +496,53 @@ def send_score(round_score):
 
 
 def draw_players(game:Game):
+    global animate_flag
+    global animate_alpha
     players = game.get_players()
     card_x, card_y = 23, 494
     name_x, name_y = 35, 562
     score_x, score_y = 35, 602
     counter = 1
+    card_array = ['player_card_1','player_card_2','player_card_3','player_card_4']
+    alpha_array = ['player_card_1_alpha','player_card_2_alpha','player_card_3_alpha','player_card_4_alpha']
     for id, data in players.items():
         name = lalezar_30.render(data['name'],1,'black')
         score = lalezar_30.render(str(data['score']),1,'black')
         player_card_holder = 'player_card_' + str(counter)
-        SCREEN.blit(images[player_card_holder],(card_x,card_y))
+        
+        # If animation ganern
+        if animate_flag[counter-1] == 0:
+            SCREEN.blit(images[player_card_holder],(card_x,card_y))
+        else:
+            if animate_flag[counter-1] == 2:
+                front_to_invisible = images[card_array[counter-1]].convert_alpha()
+                front_to_invisible.set_alpha(animate_alpha[counter-1])
+
+                back_to_visible = images[alpha_array[counter-1]].convert_alpha()
+                back_to_visible.set_alpha(255 - animate_alpha[counter-1])
+                
+                SCREEN.blit(front_to_invisible,(card_x,card_y))
+                SCREEN.blit(back_to_visible,(card_x,card_y))
+
+                animate_alpha[counter-1] -= 13
+                if animate_alpha[counter-1] < 0:
+                    animate_alpha[counter-1] = 0
+                    animate_flag[counter-1] -= 1
+            else:
+                front_to_invisible = images[card_array[counter-1]].convert_alpha()
+                front_to_invisible.set_alpha(animate_alpha[counter-1])
+
+                back_to_visible = images[alpha_array[counter-1]].convert_alpha()
+                back_to_visible.set_alpha(255 - animate_alpha[counter-1])
+                
+                SCREEN.blit(front_to_invisible,(card_x,card_y))
+                SCREEN.blit(back_to_visible,(card_x,card_y))
+
+                animate_alpha[counter-1] += 13
+                if animate_alpha[counter-1] > 255:
+                    animate_alpha[counter-1] = 255
+                    animate_flag[counter-1] -= 1
+        
         SCREEN.blit(name,(name_x,name_y))
         SCREEN.blit(score,(score_x,score_y))
         card_x += 248
@@ -626,7 +660,6 @@ def animate_player_card(card,card_alpha,pos_x,pos_y,counter,alpha,frames):
             card_2_with_alpha = images[card_alpha].convert_alpha()
             card_2_with_alpha.set_alpha(255 - alpha)
 
-            #SCREEN.blit(images[card],(pos_x,pos_y))
             SCREEN.blit(card_1_with_alpha,(pos_x,pos_y))
             SCREEN.blit(card_2_with_alpha,(pos_x,pos_y))
 
@@ -655,6 +688,38 @@ def animate_player_card(card,card_alpha,pos_x,pos_y,counter,alpha,frames):
         SCREEN.blit(images[card],(pos_x,pos_y))
 
     return counter, alpha
+
+def animate_card2(card_id,label_array):
+    global animate_flag
+    global card_rect_array
+    global score_rect_array
+    global label_rect_array
+    reverse_flag = 0
+    card_array = ['player_card_1','player_card_2','player_card_3','player_card_4']
+    alpha_array = ['player_card_1_alpha','player_card_2_alpha','player_card_3_alpha','player_card_4_alpha']
+    if animate_flag[card_id] == 0:
+        alpha = 255
+        animate_flag[card_id] = 1
+        for i in range(0,20):
+            print(alpha)
+            front_to_invisible = images[card_array[card_id]].convert_alpha()
+            front_to_invisible.set_alpha(alpha)
+
+            back_to_visible = images[card_array[card_id]].convert_alpha()
+            back_to_visible.set_alpha(255 - alpha)
+
+            #SCREEN.blit(front_to_invisible,card_rect_array[card_id])
+            #SCREEN.blit(back_to_visible,card_rect_array[card_id])
+            
+            SCREEN.blit(front_to_invisible,(0,0))
+            SCREEN.blit(back_to_visible,(0,0))
+
+            alpha -= 13
+            if alpha < 0:
+                alpha = 0
+        animate_flag[card_id] = 0
+    else:
+        pass
 
 def player_name():
     screen_transition.play()
