@@ -231,7 +231,7 @@ def loading(game: Game):
         player_count_render = inria_italic_40.render(player_count_text, 1, 'Black')
         SCREEN.blit(player_count_render, (483, 500))
 
-        # end_screen(game)
+        end_screen(game)
 
         for i in range(0, len(loading_array)):
             selected_icon = images['loading_0'] if loading_array[i] == 0 else images['loading_1']
@@ -837,11 +837,17 @@ def end_screen(game:Game):
         # Label
         window_label = inria_italic_40.render(highlight_name,2,'White')
         text_w, text_h = window_label.get_size()
-        x_center = (691 - text_w) // 2
-        SCREEN.blit(window_label,(x_center+294,298))
+        x_center = ((691 - text_w) // 2) + 294
+        victory_b = images['victory_b'].get_rect(topleft = (x_center+(text_w)+17,301))
+        SCREEN.blit(window_label,(x_center,298))
 
         SCREEN.blit(images['congrats_label'], congrats_label_rect)
         SCREEN.blit(images['congrats_label_2'], win_label_rect)
+
+        victory_a = images['victory_a'].get_rect(topleft = (x_center-(text_w // 2)+17,301))
+        
+        SCREEN.blit(images['victory_a'], victory_a)
+        SCREEN.blit(images['victory_b'], victory_b)
 
 
         mx, my = pygame.mouse.get_pos()
