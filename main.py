@@ -37,8 +37,6 @@ btn_sfx_click = pygame.mixer.Sound(os.path.join('assets','sfx','button_click.wav
 btn_sfx_hover = pygame.mixer.Sound(os.path.join('assets','sfx','button_hover.ogg'))
 sfx_error = pygame.mixer.Sound(os.path.join('assets','sfx','error.ogg'))
 
-
-
 # Images
 images: dict[str,pygame.Surface] = load_images()
 
@@ -72,6 +70,10 @@ loading_timer = pygame.USEREVENT + 2
 round_timer = pygame.USEREVENT + 3
 
 pygame.time.set_timer(bg_timer,50)
+
+# Global Variables for Animation
+animate_flag = [0,0,0,0]
+animate_alpha = [255,255,255,255]
 
 
 def draw_bg(surface=None,rect=None,bg=images['menu_bg'],draw_logo=True,color=BEIGE):
@@ -592,8 +594,8 @@ def animate_player_card(card,card_alpha,pos_x,pos_y,counter,alpha,frames):
             card_2_with_alpha.set_alpha(255 - alpha)
 
             #SCREEN.blit(images[card],(pos_x,pos_y))
-            SCREEN.blit(card_1_with_alpha,(pos_x,pos_y - frames))
-            SCREEN.blit(card_2_with_alpha,(pos_x,pos_y - frames))
+            SCREEN.blit(card_1_with_alpha,(pos_x,pos_y))
+            SCREEN.blit(card_2_with_alpha,(pos_x,pos_y))
 
             alpha -= 13
             if alpha < 0:
@@ -610,8 +612,8 @@ def animate_player_card(card,card_alpha,pos_x,pos_y,counter,alpha,frames):
 
 
             #SCREEN.blit(images[card],(pos_x,pos_y))
-            SCREEN.blit(card_1_with_alpha,(pos_x,pos_y  - (40 - frames)))
-            SCREEN.blit(card_2_with_alpha,(pos_x,pos_y  - (40 - frames)))
+            SCREEN.blit(card_1_with_alpha,(pos_x,pos_y))
+            SCREEN.blit(card_2_with_alpha,(pos_x,pos_y))
 
             alpha += 16
             if alpha > 275:
@@ -656,9 +658,11 @@ def player_name():
         SCREEN.blit(images['name_box'],name_box_rect)
         SCREEN.blit(images['enter_btn'],enter_btn_rect)
 
+        """
         # animation should be shown locally sobberns
         counter, alpha = animate_player_card('player_card_4','player_card_4_alpha',0,400,counter,alpha,frames)
-        frames += 1        
+        frames += 1
+        """
 
         
         # Render player name on the screen
@@ -729,9 +733,11 @@ def ip_input_scene():
         SCREEN.blit(images['name_box'],name_box_rect)
         SCREEN.blit(images['enter_btn'],enter_btn_rect)
 
+        """
         # animation should be shown locally sobberns
         counter, alpha = animate_player_card('player_card_4','player_card_4_alpha',0,400,counter,alpha,frames)
-        frames += 1        
+        frames += 1
+        """
 
         
         # Render player name on the screen
