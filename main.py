@@ -200,9 +200,11 @@ def loading(game: Game):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
+            """
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
                     animate_flag[0] = 2
+            """
             if event.type == bg_timer:
                 scroll_bg()
             if event.type == loading_timer:
@@ -510,34 +512,26 @@ def draw_players(game:Game):
         score = lalezar_30.render(str(data['score']),1,'black')
         player_card_holder = 'player_card_' + str(counter)
         
-        # If animation ganern
+        # If animation_flag == 0, proceed as normal
+        # else, if 2, then its normal to alpha
+        # else, if 1, then its alpha to normal
         if animate_flag[counter-1] == 0:
             SCREEN.blit(images[player_card_holder],(card_x,card_y))
         else:
+            front_to_invisible = images[card_array[counter-1]].convert_alpha()
+            front_to_invisible.set_alpha(animate_alpha[counter-1])
+
+            back_to_visible = images[alpha_array[counter-1]].convert_alpha()
+            back_to_visible.set_alpha(255 - animate_alpha[counter-1])
+            
+            SCREEN.blit(front_to_invisible,(card_x,card_y))
+            SCREEN.blit(back_to_visible,(card_x,card_y))
             if animate_flag[counter-1] == 2:
-                front_to_invisible = images[card_array[counter-1]].convert_alpha()
-                front_to_invisible.set_alpha(animate_alpha[counter-1])
-
-                back_to_visible = images[alpha_array[counter-1]].convert_alpha()
-                back_to_visible.set_alpha(255 - animate_alpha[counter-1])
-                
-                SCREEN.blit(front_to_invisible,(card_x,card_y))
-                SCREEN.blit(back_to_visible,(card_x,card_y))
-
                 animate_alpha[counter-1] -= 13
                 if animate_alpha[counter-1] < 0:
                     animate_alpha[counter-1] = 0
                     animate_flag[counter-1] -= 1
             else:
-                front_to_invisible = images[card_array[counter-1]].convert_alpha()
-                front_to_invisible.set_alpha(animate_alpha[counter-1])
-
-                back_to_visible = images[alpha_array[counter-1]].convert_alpha()
-                back_to_visible.set_alpha(255 - animate_alpha[counter-1])
-                
-                SCREEN.blit(front_to_invisible,(card_x,card_y))
-                SCREEN.blit(back_to_visible,(card_x,card_y))
-
                 animate_alpha[counter-1] += 13
                 if animate_alpha[counter-1] > 255:
                     animate_alpha[counter-1] = 255
