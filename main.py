@@ -47,6 +47,7 @@ type_4 = pygame.mixer.Sound(os.path.join('assets','sfx','type_4.mp3'))
 screen_transition = pygame.mixer.Sound(os.path.join('assets','sfx','screen_transition.mp3'))
 correct = pygame.mixer.Sound(os.path.join('assets','sfx','correct.mp3'))
 victory = pygame.mixer.Sound(os.path.join('assets','sfx','victory.mp3'))
+notifcation = pygame.mixer.Sound(os.path.join('assets','sfx','notification.mp3'))
 
 # Images
 images: dict[str,pygame.Surface] = load_images()
@@ -221,6 +222,10 @@ def loading(game: Game):
         game_number = lalezar_35.render(f'Game {game_id}', 1, 'black')
         game_number_rect = game_number.get_rect(center=(WIDTH/2,420))
         SCREEN.blit(game_number, game_number_rect)
+        
+        server_number = lalezar_35.render(f'Server: {network.get_ip()}', 1, 'black')
+        server_number_rect = server_number.get_rect(center=(WIDTH/2,694))
+        SCREEN.blit(server_number, server_number_rect)
 
         waiting_label = inria_italic_40.render('Waiting for Players', 1, 'black')
         SCREEN.blit(waiting_label, (347, 444))
@@ -231,7 +236,7 @@ def loading(game: Game):
         player_count_render = inria_italic_40.render(player_count_text, 1, 'Black')
         SCREEN.blit(player_count_render, (483, 500))
 
-        end_screen(game)
+        # end_screen(game)
 
         for i in range(0, len(loading_array)):
             selected_icon = images['loading_0'] if loading_array[i] == 0 else images['loading_1']
@@ -372,6 +377,7 @@ def request_index(message):
 def game_proper(game: Game):
     # Temporary max input length
     # ideal: dynamically set when client can receive answers from server
+    notifcation.play()
     manager = None
     answer_input = TextInputVisualizer(manager,lalezar_50,cursor_width=0)
     
@@ -444,7 +450,7 @@ def game_proper(game: Game):
         question_rect = question_surf.get_rect(center=(WIDTH/2,qbox_height/2))
         SCREEN.blit(question_surf,question_rect)
         
-        #draw_players(game)
+        draw_players(game)
         
         SCREEN.blit(images['answer_box'],(23,669))
         answer_input_rect = answer_input.surface.get_rect(center=(WIDTH/2,715))
