@@ -444,7 +444,7 @@ def game_proper(game: Game):
         question_rect = question_surf.get_rect(center=(WIDTH/2,qbox_height/2))
         SCREEN.blit(question_surf,question_rect)
         
-        draw_players(game)
+        #draw_players(game)
         
         SCREEN.blit(images['answer_box'],(23,669))
         answer_input_rect = answer_input.surface.get_rect(center=(WIDTH/2,715))
