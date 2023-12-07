@@ -36,6 +36,7 @@ name_input = TextInputVisualizer(manager,lalezar_30,cursor_blink_interval=750,cu
 btn_sfx_click = pygame.mixer.Sound(os.path.join('assets','sfx','button_click.wav'))
 btn_sfx_hover = pygame.mixer.Sound(os.path.join('assets','sfx','button_hover.ogg'))
 sfx_error = pygame.mixer.Sound(os.path.join('assets','sfx','error.ogg'))
+bgm_sound = pygame.mixer.Sound(os.path.join('assets','bgm','bgm.mp3'))
 
 # Images
 images: dict[str,pygame.Surface] = load_images()
@@ -380,9 +381,10 @@ def game_proper(game: Game):
                 exit()
             if event.type == bg_timer:
                 scroll_bg()
-            # if event.type == pygame.KEYDOWN:    # Back to main menu (temp only!)
-            #     if event.key == pygame.K_ESCAPE:
-            #         ongoing = False
+            if event.type == pygame.KEYDOWN:    # Back to main menu (temp only!)
+                if event.key == pygame.K_RETURN:
+                    print("yeet")
+            
             if event.type == round_timer:   # time's up
                 if not score_sent: # didnt guess correctly within the time limit
                     data = send_message(f'score,{round_score}')
@@ -446,9 +448,6 @@ def leaderboard():
                 scroll_bg()
 
         draw_bg(bg=images['game_bg'],draw_logo=True,color=BLUE)
-
-        
-
 
 def receive_game_data():
     try:
@@ -523,6 +522,8 @@ def main_menu():
     btn_rects = [[images['create_btn'],images['create_btn_hover'],create_btn_rect,False],
                      [images['join_btn'],images['join_btn_hover'],join_btn_rect,False],
                      [images['mechanics_btn'],images['mechanics_btn_hover'],mechanics_btn_rect,False]]
+    
+    bgm_sound.play(loops=-1)
     
     while True:
         lmb_clicked = False
@@ -700,6 +701,8 @@ def ip_input_scene():
     manager = TextInputManager(validator=lambda input: len(input) <= 15)
     ip_input = TextInputVisualizer(manager,lalezar_30,cursor_width=0)
     
+    
+        
     while True:
         lmb_clicked = False
         ip_value = ip_input.value
@@ -771,6 +774,9 @@ def ip_input_scene():
 
 def end_screen(game:Game):
     highlight_name = "John Kekow"
+    
+    bgm_sound.stop()
+    
     
     while True:
         lmb_clicked = False
