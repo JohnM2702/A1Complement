@@ -1,4 +1,4 @@
-from network import Network, net_test
+from network import Network
 from asset_loader import load_images
 from pygame_textinput import *
 from threading import Thread
@@ -797,16 +797,10 @@ def player_name():
 
 def ip_input_scene():
     enter_btn_hovered = False
-    flag = 0
-    alpha = 255
-    counter = 0
-    frames = 0
-    
     manager = TextInputManager(validator=lambda input: len(input) <= 15)
     ip_input = TextInputVisualizer(manager,lalezar_30,cursor_width=0)
-    
-    
-        
+    global network
+         
     while True:
         lmb_clicked = False
         ip_value = ip_input.value
@@ -824,8 +818,9 @@ def ip_input_scene():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN and ip_value != '':
                     btn_sfx_click.play()
-                    if net_test(ip_value):
-                        return ip_value
+                    network = Network(ip_value)
+                    if network.connect():
+                        player_name()
                     else:
                         sfx_error.play()
                         ip_input.value = ""
@@ -841,13 +836,6 @@ def ip_input_scene():
         # Namebox and Button
         SCREEN.blit(images['name_box'],name_box_rect)
         SCREEN.blit(images['enter_btn'],enter_btn_rect)
-
-        """
-        # animation should be shown locally sobberns
-        counter, alpha = animate_player_card('player_card_4','player_card_4_alpha',0,400,counter,alpha,frames)
-        frames += 1
-        """
-
         
         # Render player name on the screen
         ip_surf = ip_input.surface
@@ -866,8 +854,9 @@ def ip_input_scene():
                 SCREEN.blit(images['enter_btn_hover'], enter_btn_rect)
                 if lmb_clicked:
                     btn_sfx_click.play()
-                    if net_test(ip_value):
-                        return ip_value
+                    network = Network(ip_value)
+                    if network.connect():
+                        player_name()
                     else:
                         sfx_error.play()
                         ip_input.value = ""
@@ -943,6 +932,5 @@ def end_screen(game:Game):
         pygame.display.update()
         clock.tick(FPS)
 
-server_ip = ip_input_scene()
-network = Network(server_ip)
-player_name()
+
+ip_input_scene()

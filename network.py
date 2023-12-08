@@ -9,7 +9,6 @@ class Network:
         self.port = 5566
         self.addr = (self.server, self.port)
         self.ip = self.get_ip()
-        self.connect()
     
     def get_ip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -23,10 +22,15 @@ class Network:
         return IP
     
     def connect(self):
-        try: 
-            self.client.connect(self.addr)
-        except Exception as e:
-            print(f'Failed to connect to the server: {e}')
+        if self.is_valid_ip(self.server):    
+            try:
+                self.client.connect(self.addr)
+                return True
+            except Exception as e:
+                print(f'Failed to connect to the server: {e}')
+                return False
+        else:
+            return False
     
     def send_and_receive(self, data):
         try:
@@ -80,28 +84,10 @@ class Network:
                 # Continue receiving data until a complete pickled object is obtained
                 continue
 
-
-def is_valid_ip(input_str):
-    ip_pattern = re.compile(r'^(\d{1,3}\.){3}\d{1,3}$')
-    if ip_pattern.match(input_str):
-        segments = list(map(int, input_str.split('.')))
-        if all(0 <= segment <= 255 for segment in segments):
-            return True
-    return False
- 
-def net_test(server_ip):
-    if is_valid_ip(server_ip):    
-        # Assuming port is 5566
-        x = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        x.settimeout(1)
-        
-        port = 5566
-        addr = (server_ip, port)
-        try:
-            x.connect(addr)
-            x.close()
-            return True
-        except:
-            return False
-    else:
+    def is_valid_ip(self, input_str):
+        ip_pattern = re.compile(r'^(\d{1,3}\.){3}\d{1,3}$')
+        if ip_pattern.match(input_str):
+            segments = list(map(int, input_str.split('.')))
+            if all(0 <= segment <= 255 for segment in segments):
+                return True
         return False
