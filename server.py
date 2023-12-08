@@ -7,7 +7,8 @@ import random
 
 class Server:
     def __init__(self) -> None:
-        self.ip = self.get_ip()
+        # self.ip = self.get_ip()
+        self.ip = '25.33.250.90'
         self.port = 5566
         self.addr = (self.ip, self.port)
         self.size = 2048
@@ -36,13 +37,12 @@ class Server:
             conn, addr = server.accept()
             print("Connected to:", addr)
             self.clients[addr[0]] = conn
-            thread = threading.Thread(target=self.threaded_client, args=(conn,addr))
+            thread = threading.Thread(target=self.threaded_client, args=(conn,addr[0]))
             thread.start()
             
-    def create_game(self, data):
+    def create_game(self, data, ip):
         player_size = data[1]
-        ip = data[2]
-        name = data[3]
+        name = data[2]
         game_id = self.id_generator.generate()
         
         self.games[game_id] = Game(game_id, player_size)
@@ -60,23 +60,22 @@ class Server:
         
         return game, game_id
         
-    def join_game(self, game:Game, game_id, data):
-        ip = data[2]
-        name = data[3]
+    def join_game(self, game:Game, game_id, data, ip):
+        name = data[2]
         game.add_player(ip, name, 0)
         print(f"{ip} has joined Game {game_id}")
         if game.get_player_size() == game.get_player_count():
             game.set_start()
     
     
-    def threaded_client(self, conn:socket.socket, addr):
+    def threaded_client(self, conn:socket.socket, ip):
         try:
             while True:
                 game, game_id = None, None
 
                 # PREGAME: client will either create a new game,
                 # view existing games, or join a game
-                game, game_id = self.handle_pregame(conn)
+                game, game_id = self.handle_pregame(conn,ip)
                 
                 try:
                     # Client just joined a game, send them the Game object
@@ -86,7 +85,7 @@ class Server:
                     self.handle_waiting(conn,game)
                     
                     # GAME: Play the actual game
-                    self.handle_game(conn,game,addr[0])
+                    self.handle_game(conn,game,ip)
 
                     # ENDGAME: Show leaderboard
                     self.handle_endgame(conn,game)
@@ -94,25 +93,26 @@ class Server:
                 except socket.error as e:
                     print(f"ERROR: {e}")
                 finally: 
-                    self.delete_player(game,game_id,addr[0])
+                    self.delete_player(game,game_id,ip)
 
         except socket.error as e:
             print(f"ERROR: {e}")
         except Exception as e:
             print(f"ERROR: {e}")
         finally: 
-            self.handle_disconnection(game,game_id,addr[0],conn)
+            self.handle_disconnection(game,game_id,ip,conn)
     
     
-    def handle_pregame(self, conn: socket.socket) -> tuple[Game,int]:
+    def handle_pregame(self, conn: socket.socket, ip) -> tuple[Game,int]:
         while True:
             data = conn.recv(2048).decode().split(',')
             if not data: raise socket.error('lost connection')
-            
+            print(f'received: {data}')
+
             if data[0] == 'create':
                 print('create request received')     
                 if len(self.games) < 6:
-                    return self.create_game(data)
+                    return self.create_game(data,ip)
                 else: 
                     conn.sendall(pickle.dumps('max games reached'))
                     
@@ -121,7 +121,7 @@ class Server:
                 game_id = int(data[1])
                 game = self.games[game_id]
                 if game.get_player_count() < game.get_player_size():
-                    self.join_game(game,game_id,data)
+                    self.join_game(game,game_id,data,ip)
                     return game, game_id
                 else: 
                     conn.sendall(pickle.dumps("game is full"))

@@ -176,12 +176,7 @@ def define_player_window():
 
 
 def create_game(player_size):
-    try:
-        data = network.send_create(player_size,name_input.value)
-    except Exception as e:
-        print(f'Failed to create game: {e}')
-        return
-
+    data = send_message(f'create,{player_size},{name_input.value}')
     if isinstance(data, str):
         # Handle case when max number of games have been reached
         # e.g. Display notice to player 
@@ -261,16 +256,8 @@ def loading(game: Game):
     game_proper(game)
 
 
-def fetch_games():
-    try:
-        return network.send_and_receive("fetch games")
-    except Exception as e:
-        print(f'Failed to fetch games: {e}')
-        return None
-
-
 def view_games():
-    games = fetch_games()
+    games = send_message('fetch games')
     running = True
     
     while running:
@@ -290,7 +277,7 @@ def view_games():
                 scroll_bg()
         
         draw_bg(images['mechanics_bg'],mechanics_bg_rect)
-        games = fetch_games()
+        games = send_message('fetch games')
 
         if isinstance(games, dict) and len(games) > 0:
             game_box_rects = []
@@ -339,12 +326,7 @@ def view_games():
 
 
 def join_game(game_id:int):
-    try:
-        data = network.send_join(game_id,name_input.value)
-    except Exception as e: 
-        print(f'Failed to join game: {e}')
-        return
-
+    data = send_message(f'join,{game_id},{name_input.value}')
     if isinstance(data, str):
         # Handle case when game is full 
         # i.e. (other client joined just milliseconds before you)
@@ -359,8 +341,10 @@ def send_message(message, receive=True):
     try:
         if receive: return network.send_and_receive(message)
         network.send(message)
+        # print(f'sent message: {message}')
     except Exception as e:
         print(f'Failed to send message: {e}')
+
 
 def request_index(message):
     while True:
@@ -497,13 +481,6 @@ def receive_game_data():
         restart_network()
         main_menu()
     
-    
-def send_score(round_score):
-    try:
-        return network.send_and_receive(f'score,{round_score}')
-    except Exception as e: 
-        print(f'Failed to send score: {e}')
-
 
 def draw_players(game:Game):
     global animate_flag

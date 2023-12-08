@@ -37,6 +37,7 @@ class Network:
             if not isinstance(data, str):
                 data = str(data)
             self.client.sendall(data.encode('utf-8'))
+            print(f'sent message: {data}')
             return self.receive_pickle()
         except socket.error as e:
             print(e)
