@@ -165,7 +165,8 @@ class Server:
                 elif data[0] == 'score':
                     print(f'score received: {data[1]} from {ip}')
                     game.update_score(ip,int(data[1]),index)
-                    self.broadcast_message(game)
+                    thread = threading.Thread(target=self.broadcast_message, args=(game,))
+                    thread.start()
                 else:
                     conn.sendall(pickle.dumps(''))
                 
