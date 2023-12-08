@@ -373,6 +373,7 @@ def request_index(message):
         except Exception as e:
             print(f'Failed to request index: {e}')
 
+
 def game_proper(game: Game):
     # Temporary max input length
     # ideal: dynamically set when client can receive answers from server
@@ -457,15 +458,22 @@ def game_proper(game: Game):
         answer_input.update(events)
         
         # guessed correctly before the time limit
+        # insert the answer verifier
         if answer_input.value == QnA[index][1] and not score_sent:
             elapsed_time = pygame.time.get_ticks() - timer_start_time
             correct.play()
             if elapsed_time <= 5000: round_score = 100
             else: round_score = 50
+
+            # this returns a float pertaining to how similar the answer and the actual answer are
+            # max score: 100
+            similarity_result = SequenceMatcher(None, answer_input.value, QnA[index][1]).ratio() * 100
+            round_score += similarity_result
+
             data = send_message(f'score,{round_score}')
             if isinstance(data,Game): game = data
             score_sent = True
-
+            
         pygame.display.update()
         clock.tick(FPS)
 
