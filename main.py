@@ -373,6 +373,24 @@ def request_index(message):
         except Exception as e:
             print(f'Failed to request index: {e}')
 
+def check_answer_similarity(to_check, to_refer):
+    #max score = 100
+    #min score = 0
+    #returns percentage of answer similarity
+    i = 0
+    score = 0
+    if len(to_check) != len(to_refer): return 0
+    while i < len(to_refer):
+        if to_check[i].isalpha():
+            if to_check[i].lower() == to_refer[i].lower():
+                score += 1/len(to_refer)
+        elif to_check[i] == to_refer[i]: 
+            score += 1/len(to_refer)
+        i += 1
+    
+    score = round(score, 1)
+    return score * 100
+
 
 def game_proper(game: Game):
     # Temporary max input length
@@ -459,16 +477,14 @@ def game_proper(game: Game):
         
         # guessed correctly before the time limit
         # insert the answer verifier
-        if answer_input.value == QnA[index][1] and not score_sent:
+        similarity_result = check_answer_similarity(answer_input.value, QnA[index][1])
+        if similarity_result > 0 and not score_sent:
             elapsed_time = pygame.time.get_ticks() - timer_start_time
             correct.play()
             if elapsed_time <= 5000: round_score = 100
             else: round_score = 50
 
-            # this returns a float pertaining to how similar the answer and the actual answer are
-            # max score: 100
-            similarity_result = SequenceMatcher(None, answer_input.value, QnA[index][1]).ratio() * 100
-            round_score += similarity_result
+            round_score *= similarity_result
 
             data = send_message(f'score,{round_score}')
             if isinstance(data,Game): game = data
