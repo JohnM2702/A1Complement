@@ -543,7 +543,6 @@ def game_proper(game: Game):
         SCREEN.blit(answer_input.surface,answer_input_rect)
         answer_input.update(events)
         
-        """
         # guessed correctly before the time limit
         # insert the answer verifier
         similarity_result = check_answer_similarity(answer_input.value, QnA[index][1])
@@ -558,8 +557,7 @@ def game_proper(game: Game):
             data = send_message(f'score,{round_score}')
             if isinstance(data,Game): game = data
             score_sent = True
-        """
-            
+        
         pygame.display.update()
         clock.tick(FPS)
 
