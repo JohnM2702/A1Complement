@@ -76,6 +76,7 @@ left_btn_rect = images['left_arrow_btn'].get_rect(topleft=(317,651))
 right_btn_rect = images['right_arrow_btn'].get_rect(topleft=(536,651))
 mechanics_smol_rect = images['mechanics_smol_btn'].get_rect(topleft=(139,114))
 credits_smol_rect = images['credits_smol_btn'].get_rect(topleft=(139,201))
+return_btn_rect = images['return_btn'].get_rect(topleft=(402,575))
 
 pcard_width, pcard_height = images['player_card'].get_size()
 gbox_width, gbox_height = images['game_box'].get_size()
@@ -121,11 +122,14 @@ def mechanics():
     global mechanics_flag
     window_counter = 1
     exit_btn_hover = False
-    left_btn_hover = False
-    right_btn_hover = False
     mechanics_btn_hover = False
     credits_btn_hover = False
-    running = True 
+    running = True
+    
+    # Legacy
+    # left_btn_hover = False
+    # right_btn_hover = False
+     
     while running:
         lmb_clicked = False
         for event in pygame.event.get():
@@ -148,10 +152,6 @@ def mechanics():
             SCREEN.blit(images['mechanics_smol_btn_current'],mechanics_smol_rect)
             SCREEN.blit(images['credits_smol_btn'],credits_smol_rect)
             
-            if window_counter != 1:
-                SCREEN.blit(images['left_arrow_btn'],left_btn_rect)
-            if window_counter != 3:
-                SCREEN.blit(images['right_arrow_btn'],right_btn_rect)
         elif mechanics_flag[1] == 1:
             draw_bg(images['credits_window'],mechanics_bg_rect,draw_logo=False)
             SCREEN.blit(images['exit_btn'],exit_btn_rect)
@@ -187,24 +187,6 @@ def mechanics():
             if lmb_clicked:
                 btn_sfx_click.play()
                 main_menu()
-        if left_btn_rect.collidepoint(mx, my):
-            if window_counter != 1:
-                if not left_btn_hover:
-                    btn_sfx_hover.play()
-                    left_btn_hover = True
-                SCREEN.blit(images['left_arrow_btn_hover'],left_btn_rect)
-                if lmb_clicked:
-                    btn_sfx_click.play()
-                    window_counter -= 1
-        if right_btn_rect.collidepoint(mx, my):
-            if window_counter != 3:
-                if not right_btn_hover:
-                    btn_sfx_hover.play()
-                    right_btn_hover = True
-                SCREEN.blit(images['right_arrow_btn_hover'],right_btn_rect)
-                if lmb_clicked:
-                    btn_sfx_click.play()
-                    window_counter += 1
         else: 
             mechanics_btn_hover = False
             credits_btn_hover = False
@@ -590,6 +572,8 @@ def send_score(round_score):
         print(f'Failed to send score: {e}')
 
 
+# If you want to animate a card getting correct
+# assign the value of animate_flag[card_id] = 2
 def draw_players(game:Game):
     global animate_flag
     global animate_alpha
@@ -778,13 +762,6 @@ def player_name():
         # Namebox and Button
         SCREEN.blit(images['name_box'],name_box_rect)
         SCREEN.blit(images['enter_btn'],enter_btn_rect)
-
-        """
-        # animation should be shown locally sobberns
-        counter, alpha = animate_player_card('player_card_4','player_card_4_alpha',0,400,counter,alpha,frames)
-        frames += 1
-        """
-
         
         # Render player name on the screen
         player_name_surf = name_input.surface
@@ -813,16 +790,9 @@ def player_name():
         clock.tick(FPS)
 
 def ip_input_scene():
-    enter_btn_hovered = False
-    flag = 0
-    alpha = 255
-    counter = 0
-    frames = 0
-    
+    enter_btn_hovered = False  
     manager = TextInputManager(validator=lambda input: len(input) <= 15)
     ip_input = TextInputVisualizer(manager,lalezar_30,cursor_width=0)
-    
-    
         
     while True:
         lmb_clicked = False
@@ -858,13 +828,6 @@ def ip_input_scene():
         # Namebox and Button
         SCREEN.blit(images['name_box'],name_box_rect)
         SCREEN.blit(images['enter_btn'],enter_btn_rect)
-
-        """
-        # animation should be shown locally sobberns
-        counter, alpha = animate_player_card('player_card_4','player_card_4_alpha',0,400,counter,alpha,frames)
-        frames += 1
-        """
-
         
         # Render player name on the screen
         ip_surf = ip_input.surface
@@ -891,6 +854,49 @@ def ip_input_scene():
                         
             else: 
                 enter_btn_hovered = False
+                
+        pygame.display.update()
+        clock.tick(FPS) 
+        
+def disconnect_scene():
+    return_btn_hover = False    
+    manager = TextInputManager(validator=lambda input: len(input) <= 15)
+        
+    while True:
+        lmb_clicked = False
+        events = pygame.event.get()
+        
+        for event in events:
+            if event.type == pygame.QUIT:
+                main_menu()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    lmb_clicked = True
+            if event.type == bg_timer:
+                scroll_bg()
+
+        draw_bg(images['loading_bg'],loading_bg_rect)
+
+        # Label
+        window_label = inria_italic_40.render("Disconnected",1,'Black')
+        SCREEN.blit(window_label,(395,468))
+        
+        # Namebox and Button
+        SCREEN.blit(images['return_btn'],return_btn_rect)
+        
+        mx, my = pygame.mouse.get_pos()
+        
+        # Handle button hover & sfx
+        if return_btn_rect.collidepoint(mx, my):
+            if not return_btn_hover:
+                btn_sfx_hover.play()
+                return_btn_hover = True
+            SCREEN.blit(images['return_btn_hover'], return_btn_rect)
+            if lmb_clicked:
+                btn_sfx_click.play()
+                main_menu()
+        else: 
+            return_btn_hover = False
                 
         pygame.display.update()
         clock.tick(FPS) 
