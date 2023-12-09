@@ -1,7 +1,7 @@
-from network import Network, net_test
 from asset_loader import load_images
 from pygame_textinput import *
 from threading import Thread
+from network import Network
 from game import Game
 from sys import exit
 import pygame, os
@@ -243,12 +243,7 @@ def define_player_window():
 
 
 def create_game(player_size):
-    try:
-        data = network.send_create(player_size,name_input.value)
-    except Exception as e:
-        print(f'Failed to create game: {e}')
-        return
-
+    data = send_message(f'create,{player_size},{name_input.value}')
     if isinstance(data, str):
         # Handle case when max number of games have been reached
         # e.g. Display notice to player 
@@ -328,16 +323,8 @@ def loading(game: Game):
     game_proper(game)
 
 
-def fetch_games():
-    try:
-        return network.send_and_receive("fetch games")
-    except Exception as e:
-        print(f'Failed to fetch games: {e}')
-        return None
-
-
 def view_games():
-    games = fetch_games()
+    games = send_message('fetch games')
     running = True
     
     while running:
@@ -357,7 +344,7 @@ def view_games():
                 scroll_bg()
         
         draw_bg(images['mechanics_bg'],mechanics_bg_rect)
-        games = fetch_games()
+        games = send_message('fetch games')
 
         if isinstance(games, dict) and len(games) > 0:
             game_box_rects = []
@@ -406,12 +393,7 @@ def view_games():
 
 
 def join_game(game_id:int):
-    try:
-        data = network.send_join(game_id,name_input.value)
-    except Exception as e: 
-        print(f'Failed to join game: {e}')
-        return
-
+    data = send_message(f'join,{game_id},{name_input.value}')
     if isinstance(data, str):
         # Handle case when game is full 
         # i.e. (other client joined just milliseconds before you)
@@ -426,8 +408,10 @@ def send_message(message, receive=True):
     try:
         if receive: return network.send_and_receive(message)
         network.send(message)
+        # print(f'sent message: {message}')
     except Exception as e:
         print(f'Failed to send message: {e}')
+
 
 def request_index(message):
     while True:
@@ -599,13 +583,6 @@ def receive_game_data():
         restart_network()
         main_menu()
     
-    
-def send_score(round_score):
-    try:
-        return network.send_and_receive(f'score,{round_score}')
-    except Exception as e: 
-        print(f'Failed to send score: {e}')
-
 
 # If you want to animate a card getting correct
 # assign the value of animate_flag[card_id] = 2
@@ -825,10 +802,11 @@ def player_name():
         clock.tick(FPS)
 
 def ip_input_scene():
-    enter_btn_hovered = False  
+    enter_btn_hovered = False
     manager = TextInputManager(validator=lambda input: len(input) <= 15)
     ip_input = TextInputVisualizer(manager,lalezar_30,cursor_width=0)
-
+    global network
+         
     while True:
         lmb_clicked = False
         ip_value = ip_input.value
@@ -846,8 +824,9 @@ def ip_input_scene():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN and ip_value != '':
                     btn_sfx_click.play()
-                    if net_test(ip_value):
-                        return ip_value
+                    network = Network(ip_value)
+                    if network.connect():
+                        player_name()
                     else:
                         sfx_error.play()
                         ip_input.value = ""
@@ -885,8 +864,9 @@ def ip_input_scene():
                 SCREEN.blit(images['enter_btn_hover'], enter_btn_rect)
                 if lmb_clicked:
                     btn_sfx_click.play()
-                    if net_test(ip_value):
-                        return ip_value
+                    network = Network(ip_value)
+                    if network.connect():
+                        player_name()
                     else:
                         sfx_error.play()
                         ip_input.value = ""
@@ -1007,6 +987,5 @@ def end_screen(game:Game):
         pygame.display.update()
         clock.tick(FPS)
 
-server_ip = ip_input_scene()
-network = Network(server_ip)
-player_name()
+
+ip_input_scene()
