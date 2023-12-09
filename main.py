@@ -479,7 +479,23 @@ def game_proper(game: Game):
                 scroll_bg()
             if event.type == pygame.KEYDOWN:    # Back to main menu (temp only!)
                 if event.key == pygame.K_RETURN:
-                    print("yeet")            
+                    # guessed correctly before the time limit
+                    # insert the answer verifier
+                    if answer_input.value == QnA[index][1] and not score_sent:
+                        elapsed_time = pygame.time.get_ticks() - timer_start_time
+                        correct.play()
+                        if elapsed_time <= 5000: round_score = 100
+                        else: round_score = 50
+
+                        # this returns a float pertaining to how similar the answer and the actual answer are
+                        # max score: 100
+                        #similarity_result = SequenceMatcher(None, answer_input.value, QnA[index][1]).ratio() * 100
+                        #round_score += similarity_result
+
+                        data = send_message(f'score,{round_score}')
+                        if isinstance(data,Game): game = data
+                        score_sent = True
+                    answer_input.value = ""       
                 # typing_sfx should only appear when highlighted sob
                 typing_sfx()
             
@@ -491,6 +507,7 @@ def game_proper(game: Game):
                 round_score = 0
                 time_limit = 10000
                 timer_stopped = True
+                answer_input.value = ""
                 
         if timer_stopped:
             if not thread_started:
@@ -524,7 +541,7 @@ def game_proper(game: Game):
         SCREEN.blit(answer_input.surface,answer_input_rect)
         answer_input.update(events)
         
-        
+        """
         # guessed correctly before the time limit
         # insert the answer verifier
         if answer_input.value == QnA[index][1] and not score_sent:
@@ -541,6 +558,7 @@ def game_proper(game: Game):
             data = send_message(f'score,{round_score}')
             if isinstance(data,Game): game = data
             score_sent = True
+        """
             
         pygame.display.update()
         clock.tick(FPS)
