@@ -485,10 +485,12 @@ def game_proper(game: Game):
                     if similarity_result > 0 and not score_sent:
                         elapsed_time = pygame.time.get_ticks() - timer_start_time
                         correct.play()
+                        
                         if elapsed_time <= 5000: round_score = 100
                         else: round_score = 50
 
                         round_score *= similarity_result
+                        round_score = int(round_score)
 
                         data = send_message(f'score,{round_score}')
                         if isinstance(data,Game): game = data
