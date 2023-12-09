@@ -483,16 +483,14 @@ def game_proper(game: Game):
                 if event.key == pygame.K_RETURN:
                     # guessed correctly before the time limit
                     # insert the answer verifier
-                    if answer_input.value == QnA[index][1] and not score_sent:
+                    similarity_result = check_answer_similarity(answer_input.value, QnA[index][1])
+                    if similarity_result > 0 and not score_sent:
                         elapsed_time = pygame.time.get_ticks() - timer_start_time
                         correct.play()
                         if elapsed_time <= 5000: round_score = 100
                         else: round_score = 50
 
-                        # this returns a float pertaining to how similar the answer and the actual answer are
-                        # max score: 100
-                        #similarity_result = SequenceMatcher(None, answer_input.value, QnA[index][1]).ratio() * 100
-                        #round_score += similarity_result
+                        round_score *= similarity_result
 
                         data = send_message(f'score,{round_score}')
                         if isinstance(data,Game): game = data
@@ -543,20 +541,20 @@ def game_proper(game: Game):
         SCREEN.blit(answer_input.surface,answer_input_rect)
         answer_input.update(events)
         
-        # guessed correctly before the time limit
-        # insert the answer verifier
-        similarity_result = check_answer_similarity(answer_input.value, QnA[index][1])
-        if similarity_result > 0 and not score_sent:
-            elapsed_time = pygame.time.get_ticks() - timer_start_time
-            correct.play()
-            if elapsed_time <= 5000: round_score = 100
-            else: round_score = 50
+        # # guessed correctly before the time limit
+        # # insert the answer verifier
+        # similarity_result = check_answer_similarity(answer_input.value, QnA[index][1])
+        # if similarity_result > 0 and not score_sent:
+        #     elapsed_time = pygame.time.get_ticks() - timer_start_time
+        #     correct.play()
+        #     if elapsed_time <= 5000: round_score = 100
+        #     else: round_score = 50
 
-            round_score *= similarity_result
+        #     round_score *= similarity_result
 
-            data = send_message(f'score,{round_score}')
-            if isinstance(data,Game): game = data
-            score_sent = True
+        #     data = send_message(f'score,{round_score}')
+        #     if isinstance(data,Game): game = data
+        #     score_sent = True
         
         pygame.display.update()
         clock.tick(FPS)
