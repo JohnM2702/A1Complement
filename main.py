@@ -70,6 +70,14 @@ exit_game_btn_rect = images['exit_game_btn'].get_rect(topleft=(491,481))
 congrats_label_rect = images['congrats_label'].get_rect(topleft=(294,194))
 win_label_rect = images['congrats_label_2'].get_rect(topleft=(485,367))
 
+# Mechanics Images
+exit_btn_rect = images['exit_btn'].get_rect(topleft=(52,55))
+left_btn_rect = images['left_arrow_btn'].get_rect(topleft=(317,651))
+right_btn_rect = images['right_arrow_btn'].get_rect(topleft=(536,651))
+mechanics_smol_rect = images['mechanics_smol_btn'].get_rect(topleft=(139,114))
+credits_smol_rect = images['credits_smol_btn'].get_rect(topleft=(139,201))
+return_btn_rect = images['return_btn'].get_rect(topleft=(402,575))
+
 pcard_width, pcard_height = images['player_card'].get_size()
 gbox_width, gbox_height = images['game_box'].get_size()
 qbox_width, qbox_height = images['question_box'].get_size()
@@ -109,10 +117,21 @@ def draw_bg(surface=None,rect=None,bg=images['menu_bg'],draw_logo=True,color=BEI
     if draw_logo:
         SCREEN.blit(images['logo'],logo_rect)
 
-
+mechanics_flag = [1,0]
 def mechanics():
-    running = True 
+    global mechanics_flag
+    window_counter = 1
+    exit_btn_hover = False
+    mechanics_btn_hover = False
+    credits_btn_hover = False
+    running = True
+    
+    # Legacy
+    # left_btn_hover = False
+    # right_btn_hover = False
+     
     while running:
+        lmb_clicked = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -120,9 +139,57 @@ def mechanics():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    lmb_clicked = True
             if event.type == bg_timer:
                 scroll_bg()
-        draw_bg(images['mechanics_bg'],mechanics_bg_rect)
+        
+        if mechanics_flag[0] == 1:
+            draw_bg(images['mechanics_window_' + str(window_counter)],mechanics_bg_rect,draw_logo=False)
+            
+            SCREEN.blit(images['exit_btn'],exit_btn_rect)
+            SCREEN.blit(images['mechanics_smol_btn_current'],mechanics_smol_rect)
+            SCREEN.blit(images['credits_smol_btn'],credits_smol_rect)
+            
+        elif mechanics_flag[1] == 1:
+            draw_bg(images['credits_window'],mechanics_bg_rect,draw_logo=False)
+            SCREEN.blit(images['exit_btn'],exit_btn_rect)
+            SCREEN.blit(images['mechanics_smol_btn'],mechanics_smol_rect)
+            SCREEN.blit(images['credits_smol_btn_current'],credits_smol_rect)
+        
+        mx, my = pygame.mouse.get_pos()
+        # Handle button hover & sfx
+        if mechanics_smol_rect.collidepoint(mx, my):
+            if not mechanics_btn_hover:
+                btn_sfx_hover.play()
+                mechanics_btn_hover = True
+            SCREEN.blit(images['mechanics_smol_btn_hover'],mechanics_smol_rect)
+            if lmb_clicked:
+                btn_sfx_click.play()
+                mechanics_flag[0] = 1
+                mechanics_flag[1] = 0
+                window_counter = 1
+        if credits_smol_rect.collidepoint(mx, my):
+            if not credits_btn_hover:
+                btn_sfx_hover.play()
+                credits_btn_hover = True
+            SCREEN.blit(images['credits_smol_btn_hover'],credits_smol_rect)
+            if lmb_clicked:
+                btn_sfx_click.play()
+                mechanics_flag[0] = 0
+                mechanics_flag[1] = 1
+        if exit_btn_rect.collidepoint(mx, my):
+            if not exit_btn_hover:
+                btn_sfx_hover.play()
+                exit_btn_hover = True
+            SCREEN.blit(images['exit_btn_hover'],exit_btn_rect)
+            if lmb_clicked:
+                btn_sfx_click.play()
+                main_menu()
+        else: 
+            mechanics_btn_hover = False
+            credits_btn_hover = False
         pygame.display.update()
         clock.tick(FPS)
         
@@ -412,7 +479,23 @@ def game_proper(game: Game):
                 scroll_bg()
             if event.type == pygame.KEYDOWN:    # Back to main menu (temp only!)
                 if event.key == pygame.K_RETURN:
-                    print("yeet")
+                    # guessed correctly before the time limit
+                    # insert the answer verifier
+                    if answer_input.value == QnA[index][1] and not score_sent:
+                        elapsed_time = pygame.time.get_ticks() - timer_start_time
+                        correct.play()
+                        if elapsed_time <= 5000: round_score = 100
+                        else: round_score = 50
+
+                        # this returns a float pertaining to how similar the answer and the actual answer are
+                        # max score: 100
+                        #similarity_result = SequenceMatcher(None, answer_input.value, QnA[index][1]).ratio() * 100
+                        #round_score += similarity_result
+
+                        data = send_message(f'score,{round_score}')
+                        if isinstance(data,Game): game = data
+                        score_sent = True
+                    answer_input.value = ""       
                 # typing_sfx should only appear when highlighted sob
                 typing_sfx()
             
@@ -424,6 +507,7 @@ def game_proper(game: Game):
                 round_score = 0
                 time_limit = 10000
                 timer_stopped = True
+                answer_input.value = ""
                 
         if timer_stopped:
             if not thread_started:
@@ -457,6 +541,7 @@ def game_proper(game: Game):
         SCREEN.blit(answer_input.surface,answer_input_rect)
         answer_input.update(events)
         
+        """
         # guessed correctly before the time limit
         # insert the answer verifier
         if answer_input.value == QnA[index][1] and not score_sent:
@@ -467,12 +552,13 @@ def game_proper(game: Game):
 
             # this returns a float pertaining to how similar the answer and the actual answer are
             # max score: 100
-            similarity_result = SequenceMatcher(None, answer_input.value, QnA[index][1]).ratio() * 100
-            round_score += similarity_result
+            #similarity_result = SequenceMatcher(None, answer_input.value, QnA[index][1]).ratio() * 100
+            #round_score += similarity_result
 
             data = send_message(f'score,{round_score}')
             if isinstance(data,Game): game = data
             score_sent = True
+        """
             
         pygame.display.update()
         clock.tick(FPS)
@@ -505,6 +591,8 @@ def send_score(round_score):
         print(f'Failed to send score: {e}')
 
 
+# If you want to animate a card getting correct
+# assign the value of animate_flag[card_id] = 2
 def draw_players(game:Game):
     global animate_flag
     global animate_alpha
@@ -583,15 +671,18 @@ def restart_network():
     global network 
     network = Network(server_ip)
     
-    
+bgm_flag = 0
 def main_menu():
+    global bgm_flag
     field_clicked = False
     name_input.cursor_visible = False
     btn_rects = [[images['create_btn'],images['create_btn_hover'],create_btn_rect,False],
                      [images['join_btn'],images['join_btn_hover'],join_btn_rect,False],
                      [images['mechanics_btn'],images['mechanics_btn_hover'],mechanics_btn_rect,False]]
     
-    bgm_sound.play(loops=-1)
+    if bgm_flag == 0: 
+        bgm_sound.play(loops=-1)
+        bgm_flag = 1
     
     while True:
         lmb_clicked = False
@@ -652,84 +743,9 @@ def main_menu():
         pygame.display.update()
         clock.tick(FPS)
 
-def animate_player_card(card,card_alpha,pos_x,pos_y,counter,alpha,frames):
-    if counter < 2:
-        if counter == 0:             
-                
-            card_1_with_alpha = images[card].convert_alpha()
-            card_1_with_alpha.set_alpha(alpha)
-
-            card_2_with_alpha = images[card_alpha].convert_alpha()
-            card_2_with_alpha.set_alpha(255 - alpha)
-
-            SCREEN.blit(card_1_with_alpha,(pos_x,pos_y))
-            SCREEN.blit(card_2_with_alpha,(pos_x,pos_y))
-
-            alpha -= 13
-            if alpha < 0:
-                alpha = 0
-                counter += 1
-                
-        elif counter == 1:
-                
-            card_1_with_alpha = images[card_alpha].convert_alpha()
-            card_1_with_alpha.set_alpha(255 - alpha)
-
-            card_2_with_alpha = images[card].convert_alpha()
-            card_2_with_alpha.set_alpha(alpha)
-
-
-            #SCREEN.blit(images[card],(pos_x,pos_y))
-            SCREEN.blit(card_1_with_alpha,(pos_x,pos_y))
-            SCREEN.blit(card_2_with_alpha,(pos_x,pos_y))
-
-            alpha += 16
-            if alpha > 275:
-                counter += 1
-    else:
-        SCREEN.blit(images[card],(pos_x,pos_y))
-
-    return counter, alpha
-
-def animate_card2(card_id,label_array):
-    global animate_flag
-    global card_rect_array
-    global score_rect_array
-    global label_rect_array
-    reverse_flag = 0
-    card_array = ['player_card_1','player_card_2','player_card_3','player_card_4']
-    alpha_array = ['player_card_1_alpha','player_card_2_alpha','player_card_3_alpha','player_card_4_alpha']
-    if animate_flag[card_id] == 0:
-        alpha = 255
-        animate_flag[card_id] = 1
-        for i in range(0,20):
-            print(alpha)
-            front_to_invisible = images[card_array[card_id]].convert_alpha()
-            front_to_invisible.set_alpha(alpha)
-
-            back_to_visible = images[card_array[card_id]].convert_alpha()
-            back_to_visible.set_alpha(255 - alpha)
-
-            #SCREEN.blit(front_to_invisible,card_rect_array[card_id])
-            #SCREEN.blit(back_to_visible,card_rect_array[card_id])
-            
-            SCREEN.blit(front_to_invisible,(0,0))
-            SCREEN.blit(back_to_visible,(0,0))
-
-            alpha -= 13
-            if alpha < 0:
-                alpha = 0
-        animate_flag[card_id] = 0
-    else:
-        pass
-
 def player_name():
     screen_transition.play()
     enter_btn_hovered = False
-    flag = 0
-    alpha = 255
-    counter = 0
-    frames = 0
     while True:
         lmb_clicked = False
         player_name_value = name_input.value
@@ -752,6 +768,8 @@ def player_name():
                 # typing_sfx should only appear when highlighted sob
                 typing_sfx()
 
+            
+
         draw_bg(images['loading_bg'],loading_bg_rect)
 
         # Label
@@ -761,19 +779,14 @@ def player_name():
         # Namebox and Button
         SCREEN.blit(images['name_box'],name_box_rect)
         SCREEN.blit(images['enter_btn'],enter_btn_rect)
-
-        """
-        # animation should be shown locally sobberns
-        counter, alpha = animate_player_card('player_card_4','player_card_4_alpha',0,400,counter,alpha,frames)
-        frames += 1
-        """
-
         
         # Render player name on the screen
         player_name_surf = name_input.surface
         player_name_rect = player_name_surf.get_rect(center=(WIDTH/2,517))
         SCREEN.blit(name_input.surface,player_name_rect)
+        
         name_input.update(events)
+        
 
         mx, my = pygame.mouse.get_pos()
         
@@ -796,17 +809,10 @@ def player_name():
         clock.tick(FPS)
 
 def ip_input_scene():
-    enter_btn_hovered = False
-    flag = 0
-    alpha = 255
-    counter = 0
-    frames = 0
-    
+    enter_btn_hovered = False  
     manager = TextInputManager(validator=lambda input: len(input) <= 15)
     ip_input = TextInputVisualizer(manager,lalezar_30,cursor_width=0)
-    
-    
-        
+
     while True:
         lmb_clicked = False
         ip_value = ip_input.value
@@ -829,8 +835,12 @@ def ip_input_scene():
                     else:
                         sfx_error.play()
                         ip_input.value = ""
+
                 # typing_sfx should only appear when highlighted sob
                 typing_sfx()
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_BACKSPACE:
+                    backspace_pressed = False
 
         draw_bg(images['loading_bg'],loading_bg_rect)
 
@@ -841,13 +851,6 @@ def ip_input_scene():
         # Namebox and Button
         SCREEN.blit(images['name_box'],name_box_rect)
         SCREEN.blit(images['enter_btn'],enter_btn_rect)
-
-        """
-        # animation should be shown locally sobberns
-        counter, alpha = animate_player_card('player_card_4','player_card_4_alpha',0,400,counter,alpha,frames)
-        frames += 1
-        """
-
         
         # Render player name on the screen
         ip_surf = ip_input.surface
@@ -877,10 +880,55 @@ def ip_input_scene():
                 
         pygame.display.update()
         clock.tick(FPS) 
+        
+def disconnect_scene():
+    return_btn_hover = False    
+    manager = TextInputManager(validator=lambda input: len(input) <= 15)
+        
+    while True:
+        lmb_clicked = False
+        events = pygame.event.get()
+        
+        for event in events:
+            if event.type == pygame.QUIT:
+                main_menu()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    lmb_clicked = True
+            if event.type == bg_timer:
+                scroll_bg()
+
+        draw_bg(images['loading_bg'],loading_bg_rect)
+
+        # Label
+        window_label = inria_italic_40.render("Disconnected",1,'Black')
+        SCREEN.blit(window_label,(395,468))
+        
+        # Namebox and Button
+        SCREEN.blit(images['return_btn'],return_btn_rect)
+        
+        mx, my = pygame.mouse.get_pos()
+        
+        # Handle button hover & sfx
+        if return_btn_rect.collidepoint(mx, my):
+            if not return_btn_hover:
+                btn_sfx_hover.play()
+                return_btn_hover = True
+            SCREEN.blit(images['return_btn_hover'], return_btn_rect)
+            if lmb_clicked:
+                btn_sfx_click.play()
+                main_menu()
+        else: 
+            return_btn_hover = False
+                
+        pygame.display.update()
+        clock.tick(FPS) 
 
 def end_screen(game:Game):
+    global bgm_flag
     highlight_name = "John Kekow"
     
+    bgm_flag = 0
     bgm_sound.stop()
     victory.play()    
     
