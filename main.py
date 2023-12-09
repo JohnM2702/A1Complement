@@ -453,6 +453,10 @@ def game_proper(game: Game):
     index = 0   # test
     data = None
     
+    backspace_pressed = False
+    backspace_timer = 0
+    backspace_delay = 70  # Adjust this value to set the delay between character removals
+    
     while True:
         data = send_message('index')
         if isinstance(data,int):
@@ -480,6 +484,12 @@ def game_proper(game: Game):
             if event.type == pygame.KEYDOWN:    # Back to main menu (temp only!)
                 if event.key == pygame.K_RETURN:
                     print("yeet")
+                elif event.key == pygame.K_BACKSPACE:
+                    backspace_pressed = True
+                    backspace_timer = pygame.time.get_ticks()
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_BACKSPACE:
+                    backspace_pressed = False
                 # typing_sfx should only appear when highlighted sob
                 typing_sfx()
             
@@ -523,6 +533,13 @@ def game_proper(game: Game):
         answer_input_rect = answer_input.surface.get_rect(center=(WIDTH/2,715))
         SCREEN.blit(answer_input.surface,answer_input_rect)
         answer_input.update(events)
+        
+        # Continuous backspace handling
+        if backspace_pressed and pygame.time.get_ticks() - backspace_timer > backspace_delay:
+            if answer_input.value != '':
+                answer_input.value = answer_input.value [:-1]
+            backspace_timer = pygame.time.get_ticks()
+            typing_sfx()
         
         # guessed correctly before the time limit
         # insert the answer verifier
@@ -727,10 +744,9 @@ def main_menu():
 def player_name():
     screen_transition.play()
     enter_btn_hovered = False
-    flag = 0
-    alpha = 255
-    counter = 0
-    frames = 0
+    backspace_pressed = False
+    backspace_timer = 0
+    backspace_delay = 70  # Adjust this value to set the delay between character removals
     while True:
         lmb_clicked = False
         player_name_value = name_input.value
@@ -750,8 +766,15 @@ def player_name():
                     btn_sfx_click.play()
                     screen_transition.play()
                     main_menu()
+                elif event.key == pygame.K_BACKSPACE:
+                    backspace_pressed = True
+                    backspace_timer = pygame.time.get_ticks()
                 # typing_sfx should only appear when highlighted sob
                 typing_sfx()
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_BACKSPACE:
+                    backspace_pressed = False
+            
 
         draw_bg(images['loading_bg'],loading_bg_rect)
 
@@ -768,6 +791,13 @@ def player_name():
         player_name_rect = player_name_surf.get_rect(center=(WIDTH/2,517))
         SCREEN.blit(name_input.surface,player_name_rect)
         name_input.update(events)
+        
+        # Continuous backspace handling
+        if backspace_pressed and pygame.time.get_ticks() - backspace_timer > backspace_delay:
+            if name_input.value != '':
+                name_input.value = name_input.value [:-1]
+            backspace_timer = pygame.time.get_ticks()
+            typing_sfx()
 
         mx, my = pygame.mouse.get_pos()
         
@@ -793,7 +823,11 @@ def ip_input_scene():
     enter_btn_hovered = False  
     manager = TextInputManager(validator=lambda input: len(input) <= 15)
     ip_input = TextInputVisualizer(manager,lalezar_30,cursor_width=0)
-        
+
+    backspace_pressed = False
+    backspace_timer = 0
+    backspace_delay = 70  # Adjust this value to set the delay between character removals
+
     while True:
         lmb_clicked = False
         ip_value = ip_input.value
@@ -816,8 +850,14 @@ def ip_input_scene():
                     else:
                         sfx_error.play()
                         ip_input.value = ""
+                elif event.key == pygame.K_BACKSPACE:
+                    backspace_pressed = True
+                    backspace_timer = pygame.time.get_ticks()
                 # typing_sfx should only appear when highlighted sob
                 typing_sfx()
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_BACKSPACE:
+                    backspace_pressed = False
 
         draw_bg(images['loading_bg'],loading_bg_rect)
 
@@ -834,6 +874,13 @@ def ip_input_scene():
         ip_rect = ip_surf.get_rect(center=(WIDTH/2,517))
         SCREEN.blit(ip_input.surface,ip_rect)
         ip_input.update(events)
+        
+        # Continuous backspace handling
+        if backspace_pressed and pygame.time.get_ticks() - backspace_timer > backspace_delay:
+            if ip_input.value != '':
+                ip_input.value = ip_input.value [:-1]
+            backspace_timer = pygame.time.get_ticks()
+            typing_sfx()
 
         mx, my = pygame.mouse.get_pos()
         
