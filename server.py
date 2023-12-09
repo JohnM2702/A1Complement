@@ -106,7 +106,6 @@ class Server:
         while True:
             data = conn.recv(2048).decode().split(',')
             if not data: raise socket.error('lost connection')
-            print(f'received: {data}')
 
             if data[0] == 'create':
                 print('create request received')     
@@ -146,9 +145,6 @@ class Server:
         while True:
             time_limit = 10000
             
-            # Send index of next question
-            self.handle_round_transition(conn,game,index,ip)
-            
             print(f'round {index} start {ip}')
             while not game.is_round_finished(index):
                 data = conn.recv(2048).decode().split(',')
@@ -173,14 +169,18 @@ class Server:
             index += 1
             if index == game.get_qna_length():
                 print(f'Game {game.get_id()} has ended')
+
+            # Send index of next question
+            self.handle_round_transition(conn,index,ip,thread)
     
-    def handle_round_transition(self, conn:socket.socket, game:Game, index:int, ip:str):
+    def handle_round_transition(self, conn:socket.socket, index:int, ip:str, thread:threading.Thread):
         while True:
+            if thread.is_alive(): continue
             data = conn.recv(2048).decode()
             if not data: raise socket.error('lost connection')
             elif 'index' in data:
                 print(f'index request received from {ip}')
-                conn.sendall(pickle.dumps(index))
+                conn.sendall(pickle.dumps(f'index,{index},'))
                 break
             print(f'!!! {data} from {ip}')
             

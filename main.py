@@ -4,8 +4,10 @@ from threading import Thread
 from network import Network
 from game import Game
 from sys import exit
-import pygame, os
 import random
+import pygame
+import re 
+import os
 
 pygame.init()
 FPS = 60
@@ -417,10 +419,12 @@ def request_index(message):
     while True:
         try:
             data = network.send_and_receive(message[0])
-            if isinstance(data,int):
-                print(f'received index {data}')
-                message[0] = data
-                break
+            if isinstance(data,str) and data != '':
+                data = re.split(',| ', data)
+                if len(data) > 1 and data[1].isdigit():
+                    print(f'received index {data[1]}')
+                    message[0] = int(data[1])
+                    break
         except Exception as e:
             print(f'Failed to request index: {e}')
 
@@ -454,18 +458,12 @@ def game_proper(game: Game):
     round_score = 0
     index = 0   # test
     data = None
-    
-    while True:
-        data = send_message('index')
-        if isinstance(data,int):
-            index = data
-            break
         
     time_limit = 10000
     pygame.time.set_timer(round_timer,time_limit,1)
     timer_start_time = pygame.time.get_ticks()
     score_sent = False
-    timer_stopped = False  
+    timer_stopped = False
     thread_started = False
     
     ongoing = True
