@@ -7,8 +7,7 @@ import random
 
 class Server:
     def __init__(self) -> None:
-        # self.ip = self.get_ip()
-        self.ip = '25.33.250.90'
+        self.ip = self.get_ip()
         self.port = 5566
         self.addr = (self.ip, self.port)
         self.size = 2048
