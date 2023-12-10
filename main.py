@@ -375,10 +375,12 @@ def view_games():
         if isinstance(games, dict) and len(games) > 0:
             game_box_rects = []
             count, x, y = 1, 0, 340
+            x_image, y_image = 278, 360
 
             for game_id, game in games.items():
                 circle = images['circle_waiting']
-                game_number = lalezar_35.render(f'Game {game_id}',1,'black')
+                
+                game_number = lalezar_35.render(f'G-{game_id}',1,'black')
                 p_count = game.get_player_count()
                 p_size = game.get_player_size()
                 player_count_text = f'{p_count}/{p_size}'
@@ -386,18 +388,25 @@ def view_games():
                 
                 if p_count == p_size: circle = images['circle_full']
                 
-                if count % 2 == 0: x = 586
+                if count % 2 == 0: 
+                    x = 586
+                    y = 740
                 else: x = 121
 
                 game_box_rect = pygame.Rect(x,y,gbox_width,gbox_height)
                 circle_coords = (x+22,y+28)
                 gnumber_coords = (x+64,y+20)
                 pcount_coords = (x+237,y+20)
-                game_box_rects.append([game_box_rect,circle_coords,gnumber_coords,pcount_coords,game_id,game_number,circle,player_count_surf])
+                image_cords = (x_image,y_image)
+                game_box_rects.append([game_box_rect,circle_coords,gnumber_coords,pcount_coords,game_id,game_number,circle,player_count_surf,game.get_category(),image_cords])
                 
                 count += 1
-                if count == 3 or count == 4: y += 132
-                elif count == 5 or count == 6: y += 132
+                if count == 3: 
+                    y += 132
+                    y_image = 491
+                elif count == 5: 
+                    y += 132
+                    y_image = 625
 
             mx, my = pygame.mouse.get_pos()
             
@@ -414,6 +423,10 @@ def view_games():
                 SCREEN.blit(rect[6],rect[1])
                 SCREEN.blit(rect[5],rect[2])
                 SCREEN.blit(rect[7],rect[3])
+                if rect[8] == 'General Knowledge':
+                    SCREEN.blit(images['category_gen_smol'],rect[9])
+                else:
+                    SCREEN.blit(images['category_cmsc_smol'],rect[9])
                 
         pygame.display.update()
         clock.tick(FPS)
