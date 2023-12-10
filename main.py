@@ -25,6 +25,7 @@ SCENE_WAITING       = 6
 SCENE_GAME          = 7
 SCENE_GAME_OVER     = 8
 SCENE_DISCONNECT    = 9
+SCENE_CATEGORY      = 10
 
 # Colors
 BLUE = '#537188'
@@ -78,6 +79,9 @@ enter_btn_rect = images['enter_btn'].get_rect(topleft=(401,570))
 name_box_rect = images['name_box'].get_rect(topleft=(355,487))
 
 exit_game_btn_rect = images['exit_game_btn'].get_rect(topleft=(491,481))
+
+category_gen_rect = images['category_gen'].get_rect(topleft=(343,472))
+category_cmsc_rect = images['category_cmsc'].get_rect(topleft=(538,472))
 
 congrats_label_rect = images['congrats_label'].get_rect(topleft=(294,194))
 win_label_rect = images['congrats_label_2'].get_rect(topleft=(485,367))
@@ -989,6 +993,63 @@ def end_screen(game:Game):
         
         draw_leaderboard(game)
 
+        pygame.display.update()
+        clock.tick(FPS)
+        
+def define_category():
+    screen_transition.play()
+    category_hover = False
+    while True:
+        lmb_clicked = False
+        player_name_value = name_input.value
+        events = pygame.event.get()
+        
+        for event in events:
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    lmb_clicked = True
+            if event.type == bg_timer:
+                scroll_bg()
+
+        draw_bg(images['loading_bg'],loading_bg_rect)
+        
+        # Draw Images
+        SCREEN.blit(images['category_cmsc_hover'], category_cmsc_rect)
+        SCREEN.blit(images['category_gen_hover'], category_gen_rect)
+
+        # Label
+        window_label = inria_italic_40.render("Choose Your Category",1,'Black')
+        SCREEN.blit(window_label,(331,419))        
+
+        mx, my = pygame.mouse.get_pos()
+        
+        # Handle button hover & sfx
+        if category_cmsc_rect.collidepoint(mx, my):
+            if not category_hover:
+                category_hover = True
+                btn_sfx_hover.play()
+            SCREEN.blit(images['category_cmsc_hover'], category_cmsc_rect)
+            if lmb_clicked:
+                print("Category CMSC")
+                btn_sfx_click.play()
+                screen_transition.play()
+                return SCENE_WAITING
+        elif category_gen_rect.collidepoint(mx, my):
+            if not category_hover:
+                category_hover = True
+                btn_sfx_hover.play()
+            SCREEN.blit(images['category_gen_hover'], category_gen_rect)
+            if lmb_clicked:
+                print("Category GEN KNOWLEDGE")
+                btn_sfx_click.play()
+                screen_transition.play()
+                return SCENE_WAITING
+        else: 
+            category_hover = False
+                
         pygame.display.update()
         clock.tick(FPS)
 
