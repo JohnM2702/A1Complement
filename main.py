@@ -19,7 +19,7 @@ SCENE_ENTER_IP      = 0
 SCENE_PLAYER_NAME   = 1
 SCENE_MENU          = 2
 SCENE_MECHANICS     = 3
-SCENE_CREATE_GAME   = 4
+SCENE_PLAYER_SIZE   = 4
 SCENE_VIEW_GAMES    = 5
 SCENE_WAITING       = 6
 SCENE_GAME          = 7
@@ -249,9 +249,7 @@ def define_player_window():
                 SCREEN.blit(rect[1],rect[2]) 
                 if lmb_clicked:
                     btn_sfx_click.play()
-                    running = False
-                    returned = create_game(rect[4])
-                    if returned is not None: return returned
+                    return SCENE_CATEGORY, rect[4]
             else: 
                 rect[3] = False
 
@@ -259,8 +257,8 @@ def define_player_window():
         clock.tick(FPS)
 
 
-def create_game(player_size):
-    data = send_message(f'create,{player_size},{name_input.value}')
+def create_game(player_size, category):
+    data = send_message(f'create,{player_size},{name_input.value},{category},')
     print(f'received: {data}')  # debugging
 
     if data == SCENE_DISCONNECT: return (data,None)
@@ -728,7 +726,7 @@ def main_menu():
                     if lmb_clicked:
                         btn_sfx_click.play()
                         if rect[0] is images['create_btn']:
-                            return SCENE_CREATE_GAME
+                            return SCENE_PLAYER_SIZE
                         elif rect[0] is images['join_btn']:
                             return SCENE_VIEW_GAMES
                         else: 
@@ -996,12 +994,11 @@ def end_screen(game:Game):
         pygame.display.update()
         clock.tick(FPS)
         
-def define_category():
+def define_category(player_size:int):
     screen_transition.play()
     category_hover = False
     while True:
         lmb_clicked = False
-        player_name_value = name_input.value
         events = pygame.event.get()
         
         for event in events:
@@ -1011,6 +1008,9 @@ def define_category():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     lmb_clicked = True
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return (SCENE_PLAYER_SIZE,None)
             if event.type == bg_timer:
                 scroll_bg()
 
@@ -1036,7 +1036,8 @@ def define_category():
                 print("Category CMSC")
                 btn_sfx_click.play()
                 screen_transition.play()
-                return SCENE_WAITING
+                returned = create_game(player_size,'Networking')
+                if returned is not None: return returned
         elif category_gen_rect.collidepoint(mx, my):
             if not category_hover:
                 category_hover = True
@@ -1046,7 +1047,8 @@ def define_category():
                 print("Category GEN KNOWLEDGE")
                 btn_sfx_click.play()
                 screen_transition.play()
-                return SCENE_WAITING
+                returned = create_game(player_size,'General Knowledge')
+                if returned is not None: return returned
         else: 
             category_hover = False
                 
@@ -1067,7 +1069,7 @@ while True:
         current_scene = main_menu()
     elif current_scene == SCENE_MECHANICS:
         current_scene = mechanics()
-    elif current_scene == SCENE_CREATE_GAME:
+    elif current_scene == SCENE_PLAYER_SIZE:
         current_scene, argument = define_player_window()
     elif current_scene == SCENE_VIEW_GAMES:
         current_scene, argument = view_games()
@@ -1079,3 +1081,5 @@ while True:
         current_scene = end_screen(argument)
     elif current_scene == SCENE_DISCONNECT:
         current_scene = disconnect_scene()
+    elif current_scene == SCENE_CATEGORY:
+        current_scene, argument = define_category()

@@ -1,10 +1,11 @@
 from copy import deepcopy
     
 class Game:
-    def __init__(self, id, player_size):
+    def __init__(self, id, player_size, category):
         self.QnA = []
         self.started = False
         # self.ended = False
+        self.category = category
         self.round_scores_count = 0 # How many players sent their score at the end of a round
         self.rounds = [0 for _ in range (10)]   # 0: not finished, 1: finished
         self.id = id
@@ -22,6 +23,9 @@ class Game:
 
     # def get_player(self, player_id):
     #     return self.players.get(player_id, None)
+
+    def get_category(self):
+        return self.category
     
     def get_player_count(self):
         return len(self.players)

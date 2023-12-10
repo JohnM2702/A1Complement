@@ -1,4 +1,5 @@
-from questions import Q_and_A
+from q_genknowledge import genknowledge_qna 
+from q_networking import networking_qna
 from game import Game
 import dill as pickle
 import threading
@@ -37,9 +38,10 @@ class Server:
     def create_game(self, data, ip):
         player_size = data[1]
         name = data[2]
+        category = data[3]
         game_id = self.id_generator.generate()
         
-        self.games[game_id] = Game(game_id, player_size)
+        self.games[game_id] = Game(game_id, player_size, category)
         print(f'Game {game_id} has been successfully created')
         game = self.games[game_id]
 
@@ -48,10 +50,12 @@ class Server:
         game.add_player(ip, name)
         print(f"{ip} has joined Game {game_id}")
 
-        # Shuffle Q_and_A, then take the first 10 questions & answers
-        random.shuffle(Q_and_A)
-        game.set_qna(Q_and_A[:10])
-        
+        qna = None
+        if category == 'General Knowledge': qna = genknowledge_qna
+        elif category == 'Networking': qna = networking_qna
+        random.shuffle(qna)
+        game.set_qna(qna[:10])
+
         return game, game_id
         
     def join_game(self, game:Game, game_id, data, ip):

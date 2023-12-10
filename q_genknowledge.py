@@ -1,4 +1,4 @@
-Q_and_A = [
+genknowledge_qna = [
   [
     "Which is the Earth's largest continent?",
     "Asia"
