@@ -263,6 +263,8 @@ def create_game(player_size):
         # e.g. Display notice to player 
         pass
     elif isinstance(data,Game): 
+        returned = send_message('received game', receive=False)
+        if returned == SCENE_DISCONNECT: return returned
         return SCENE_WAITING, data
     elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
     
@@ -416,6 +418,8 @@ def join_game(game_id:int):
         # e.g. Display notice to player 
         pass
     elif isinstance(data,Game): 
+        returned = send_message('received game', receive=False)
+        if returned == SCENE_DISCONNECT: return returned
         if data.has_started(): return SCENE_GAME, data
         else: return SCENE_WAITING, data
     elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
