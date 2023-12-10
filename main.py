@@ -965,7 +965,7 @@ def end_screen(game:Game):
 
 # Main game loop
 current_scene = SCENE_ENTER_IP
-argument = None
+argument = ()
 
 while True:
     if current_scene == SCENE_ENTER_IP:
@@ -981,10 +981,10 @@ while True:
     elif current_scene == SCENE_VIEW_GAMES:
         current_scene, argument = view_games()
     elif current_scene == SCENE_WAITING:
-        current_scene, argument = loading(argument)
+        current_scene, argument = loading(*argument)
     elif current_scene == SCENE_GAME:
-        current_scene, argument = game_proper(argument)
+        current_scene, argument = game_proper(*argument)
     elif current_scene == SCENE_GAME_OVER:
-        current_scene, argument = end_screen(argument)
+        current_scene, argument = end_screen(*argument)
     elif current_scene == SCENE_DISCONNECT:
         current_scene, argument = disconnect_scene()
