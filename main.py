@@ -1,12 +1,10 @@
 from asset_loader import load_images
 from pygame_textinput import *
-from threading import Thread
 from network import Network
 from game import Game
 from sys import exit
 import random
 import pygame
-import re 
 import os
 
 pygame.init()
@@ -410,23 +408,9 @@ def send_message(message, receive=True):
     try:
         if receive: return network.send_and_receive(message)
         network.send(message)
-        # print(f'sent message: {message}')
     except Exception as e:
         print(f'Failed to send message: {e}')
 
-
-def request_index(message):
-    while True:
-        try:
-            data = network.send_and_receive(message[0])
-            if isinstance(data,str) and data != '':
-                data = re.split(',| ', data)
-                if len(data) > 1 and data[1].isdigit():
-                    print(f'received index {data[1]}')
-                    message[0] = int(data[1])
-                    break
-        except Exception as e:
-            print(f'Failed to request index: {e}')
 
 def check_answer_similarity(to_check, to_refer):
     #max score = 100
@@ -448,85 +432,92 @@ def check_answer_similarity(to_check, to_refer):
 
 
 def game_proper(game: Game):
+    notifcation.play()
+
     # Temporary max input length
     # ideal: dynamically set when client can receive answers from server
-    notifcation.play()
     manager = None
     answer_input = TextInputVisualizer(manager,lalezar_50,cursor_width=0)
     
     QnA = game.get_qna()
-    round_score = 0
-    index = 0   # test
+    index = 0  
     data = None
-        
+
+    round_score = 0
     time_limit = 10000
-    pygame.time.set_timer(round_timer,time_limit,1)
-    timer_start_time = pygame.time.get_ticks()
     score_sent = False
     timer_stopped = False
-    thread_started = False
-    
     ongoing = True
+
+    pygame.time.set_timer(round_timer,time_limit,1)
+    timer_start_time = pygame.time.get_ticks()
     
     while ongoing:
         events = pygame.event.get()
-        
         for event in events: 
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
             if event.type == bg_timer:
                 scroll_bg()
-            if event.type == pygame.KEYDOWN:    # Back to main menu (temp only!)
-                if event.key == pygame.K_RETURN:
-                    # guessed correctly before the time limit
-                    # insert the answer verifier
-                    similarity_result = check_answer_similarity(answer_input.value, QnA[index][1])
-                    if similarity_result > 0 and not score_sent:
-                        elapsed_time = pygame.time.get_ticks() - timer_start_time
-                        correct.play()
-                        
-                        if elapsed_time <= 5000: round_score = 100
-                        else: round_score = 50
-
-                        round_score *= similarity_result
-                        round_score = int(round_score)
-
-                        data = send_message(f'score,{round_score}')
-                        if isinstance(data,Game): game = data
-                        score_sent = True
-                    answer_input.value = ""       
-                # typing_sfx should only appear when highlighted sob
-                typing_sfx()
-            
             if event.type == round_timer:   # time's up
+                timer_stopped = True
                 if not score_sent: # didnt guess correctly within the time limit
-                    data = send_message(f'score,{round_score}')
-                    if isinstance(data,Game): game = data
+                    send_message(f'score,{round_score}', receive=False)
                     score_sent = True
                 round_score = 0
                 time_limit = 10000
-                timer_stopped = True
                 answer_input.value = ""
+            if event.type == pygame.KEYDOWN:   
+                if event.key == pygame.K_RETURN:
+                    if not score_sent and not timer_stopped:
+                        # guessed correctly before the time limit
+                        # insert the answer verifier
+                        similarity_result = check_answer_similarity(answer_input.value, QnA[index][1])
+                        if similarity_result > 0:
+                            elapsed_time = pygame.time.get_ticks() - timer_start_time
+                            correct.play()
+
+                            if elapsed_time <= 5000: round_score = 100
+                            else: round_score = 50
+
+                            round_score *= similarity_result
+                            round_score = int(round_score)
+
+                            send_message(f'score,{round_score},', receive=False)
+                            game.update_score(network.ip,round_score,index)
+                            score_sent = True
+                    answer_input.value = ""       
+                # typing_sfx should only appear when highlighted sob
+                typing_sfx()
                 
         if timer_stopped:
-            if not thread_started:
-                print('starting thread')
-                request = ['index']
-                thread = Thread(target=request_index, args=(request,))
-                thread.start()
-                thread_started = True
-            if isinstance(request[0],int): 
-                index = request[0]
-                pygame.time.set_timer(round_timer,time_limit,1)
-                timer_start_time = pygame.time.get_ticks()
+            data = receive_game_data()
+            if data != '': print(f'1received: {data}')
+            if isinstance(data,str) and 'round end' in data:
+                send_message('received notice', receive=False)
                 timer_stopped = False
                 score_sent = False
-                thread_started = False
+                index += 1
+                pygame.time.set_timer(round_timer,time_limit,1)
+                timer_start_time = pygame.time.get_ticks()
+            elif isinstance(data,Game): game = data 
+            
         else:
             data = receive_game_data()
+            if data != '': print(f'2received: {data}')
             if isinstance(data,Game): game = data 
-                    
+            elif isinstance(data,str) and 'round end' in data and score_sent:
+                send_message('received notice', receive=False)
+                pygame.time.set_timer(round_timer,0)
+                round_score = 0
+                time_limit = 10000
+                answer_input.value = ""
+                score_sent = False
+                index += 1
+                pygame.time.set_timer(round_timer,time_limit,1)
+                timer_start_time = pygame.time.get_ticks()
+                 
         draw_bg(bg=images['game_bg'],draw_logo=False,color=BLUE)
         SCREEN.blit(images['question_box'],(23,18))
         
@@ -540,22 +531,7 @@ def game_proper(game: Game):
         answer_input_rect = answer_input.surface.get_rect(center=(WIDTH/2,715))
         SCREEN.blit(answer_input.surface,answer_input_rect)
         answer_input.update(events)
-        
-        # # guessed correctly before the time limit
-        # # insert the answer verifier
-        # similarity_result = check_answer_similarity(answer_input.value, QnA[index][1])
-        # if similarity_result > 0 and not score_sent:
-        #     elapsed_time = pygame.time.get_ticks() - timer_start_time
-        #     correct.play()
-        #     if elapsed_time <= 5000: round_score = 100
-        #     else: round_score = 50
 
-        #     round_score *= similarity_result
-
-        #     data = send_message(f'score,{round_score}')
-        #     if isinstance(data,Game): game = data
-        #     score_sent = True
-        
         pygame.display.update()
         clock.tick(FPS)
 
