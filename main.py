@@ -981,7 +981,7 @@ while True:
     elif current_scene == SCENE_CREATE_GAME:
         current_scene, argument = define_player_window()
     elif current_scene == SCENE_VIEW_GAMES:
-        current_scene = view_games()
+        current_scene, argument = view_games()
     elif current_scene == SCENE_WAITING:
         current_scene, argument = loading(argument)
     elif current_scene == SCENE_GAME:
