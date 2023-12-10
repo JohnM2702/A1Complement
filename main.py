@@ -442,12 +442,11 @@ def game_proper(game: Game):
     time_limit = 10000
     score_sent = False
     timer_stopped = False
-    ongoing = True
 
     pygame.time.set_timer(round_timer,time_limit,1)
     timer_start_time = pygame.time.get_ticks()
     
-    while ongoing:
+    while True:
         events = pygame.event.get()
         for event in events: 
             if event.type == pygame.QUIT:
@@ -489,14 +488,17 @@ def game_proper(game: Game):
         if timer_stopped:
             data = receive_game_data()
             # if data != '': print(f'1received: {data}')    # debugging
-            if isinstance(data,str) and 'round end' in data:
+            if isinstance(data,Game): game = data 
+            elif isinstance(data,str) and 'round end' in data:
                 send_message('received notice', receive=False)
                 timer_stopped = False
                 score_sent = False
                 index += 1
+                if index >= 10: 
+                    end_screen(game)
+                    break
                 pygame.time.set_timer(round_timer,time_limit,1)
                 timer_start_time = pygame.time.get_ticks()
-            elif isinstance(data,Game): game = data 
         else:
             data = receive_game_data()
             # if data != '': print(f'2received: {data}')    # debugging
@@ -509,6 +511,9 @@ def game_proper(game: Game):
                 answer_input.value = ""
                 score_sent = False
                 index += 1
+                if index >= 10: 
+                    end_screen(game)
+                    break
                 pygame.time.set_timer(round_timer,time_limit,1)
                 timer_start_time = pygame.time.get_ticks()
                  
@@ -870,7 +875,7 @@ def disconnect_scene():
 
 def end_screen(game:Game):
     global bgm_flag
-    highlight_name = "John Kekow"
+    highlight_name = game.get_highest_scorer()
     
     bgm_flag = 0
     bgm_sound.stop()
@@ -898,9 +903,8 @@ def end_screen(game:Game):
         # Draw the screen
         draw_bg(bg=images['game_bg'], draw_logo=False,color=BLUE)
 
-        # need to call the highest score from sever
         # Label
-        window_label = inria_italic_40.render(highlight_name,2,'White')
+        window_label = inria_italic_40.render(highlight_name[0],2,'White')
         text_w, text_h = window_label.get_size()
         x_center = ((691 - text_w) // 2) + 294
         victory_b = images['victory_b'].get_rect(topleft = (x_center+(text_w)+17,301))
@@ -929,7 +933,6 @@ def end_screen(game:Game):
             enter_btn_hovered = False
             SCREEN.blit(images['exit_game_btn'], exit_game_btn_rect)
         
-        # need to also send score to players yeet
         draw_leaderboard(game)
 
         pygame.display.update()

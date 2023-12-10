@@ -80,9 +80,6 @@ class Server:
                     # GAME: Play the actual game
                     self.handle_game(conn,game,ip)
 
-                    # ENDGAME: Show leaderboard
-                    self.handle_endgame(conn,game)
-
                 except socket.error as e:
                     print(f"ERROR: {e}")
                 finally: 
@@ -171,6 +168,7 @@ class Server:
                         conn.sendall(pickle.dumps('round end'))
                         print(f'sent end notice to {ip}')
                         data = conn.recv(2048).decode()
+                        if not data: raise socket.error('lost connection')
                         if 'received notice' in data:
                             print(f'{ip} has received the end notice')
                             break
@@ -178,16 +176,10 @@ class Server:
             game.reset_received_count(ip)
 
             index += 1
-            if index == game.get_qna_length():
+            if index >= game.get_qna_length():
                 print(f'Game {game.get_id()} has ended')
-            
-    def handle_endgame(self, conn:socket.socket, game:Game):
-        # Send Game to client so they can display leaderboard
-        conn.sendall(pickle.dumps(game))
-        data = conn.recv(2048).decode()
-        if data == 'exit':
-            return 
-        
+                break
+
     def broadcast_with_exclusion(self, game:Game, excluded:str):
         for player in game.get_players_except(excluded):
             try:
