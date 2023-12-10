@@ -364,7 +364,7 @@ def view_games():
                     return (SCENE_MENU,None)
             if event.type == bg_timer:
                 scroll_bg()
-        
+
         draw_bg(images['mechanics_bg'],mechanics_bg_rect)
         data = send_message('fetch games')
         if isinstance(data,dict): games = data
@@ -373,9 +373,9 @@ def view_games():
         if isinstance(games, dict) and len(games) > 0:
             game_box_rects = []
             count, x, y = 1, 0, 340
-            circle = images['circle_waiting']
 
             for game_id, game in games.items():
+                circle = images['circle_waiting']
                 game_number = lalezar_35.render(f'Game {game_id}',1,'black')
                 p_count = game.get_player_count()
                 p_size = game.get_player_size()
@@ -391,11 +391,11 @@ def view_games():
                 circle_coords = (x+22,y+28)
                 gnumber_coords = (x+64,y+20)
                 pcount_coords = (x+237,y+20)
-                game_box_rects.append([game_box_rect,circle_coords,gnumber_coords,pcount_coords,game_id])
+                game_box_rects.append([game_box_rect,circle_coords,gnumber_coords,pcount_coords,game_id,game_number,circle,player_count_surf])
                 
                 count += 1
-                if count == 2: y += 132
-                elif count == 4: y += 132
+                if count == 3 or count == 4: y += 132
+                elif count == 5 or count == 6: y += 132
 
             mx, my = pygame.mouse.get_pos()
             
@@ -409,9 +409,9 @@ def view_games():
                         if returned is not None: return returned
                 else: 
                     SCREEN.blit(images['game_box'],rect[0])
-                SCREEN.blit(circle,rect[1])
-                SCREEN.blit(game_number,rect[2])
-                SCREEN.blit(player_count_surf,rect[3])
+                SCREEN.blit(rect[6],rect[1])
+                SCREEN.blit(rect[5],rect[2])
+                SCREEN.blit(rect[7],rect[3])
                 
         pygame.display.update()
         clock.tick(FPS)
