@@ -216,8 +216,8 @@ def define_player_window():
                 
         draw_bg(images['loading_bg'],loading_bg_rect)
 
-        waiting_label = inria_italic_40.render("Chose the Player Size",1,'Black')
-        SCREEN.blit(waiting_label,(332,419))
+        waiting_label = inria_italic_40.render("Choose the Player Size",1,'Black')
+        SCREEN.blit(waiting_label,(319,419))
 
         mx, my = pygame.mouse.get_pos()
         
@@ -794,7 +794,7 @@ def ip_input_scene():
 
         # Label
         window_label = inria_italic_40.render("Enter Server IP",1,'Black')
-        SCREEN.blit(window_label,(365,419))
+        SCREEN.blit(window_label,(384,417))
         
         # Namebox and Button
         SCREEN.blit(images['name_box'],name_box_rect)
