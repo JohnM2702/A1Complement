@@ -575,9 +575,11 @@ def receive_game_data():
 
 # If you want to animate a card getting correct
 # assign the value of animate_flag[card_id] = 2
+has_changed_flag = [0,0,0,0]
 def draw_players(game:Game):
     global animate_flag
     global animate_alpha
+    global has_changed_flag
     players = game.get_players()
     card_x, card_y = 23, 494
     name_x, name_y = 35, 562
@@ -588,6 +590,13 @@ def draw_players(game:Game):
     for id, data in players.items():
         name = lalezar_30.render(data['name'],1,'black')
         score = lalezar_30.render(str(data['score']),1,'black')
+        if data['score'] != 0 and has_changed_flag[counter-1] != 0:
+            if data['score'] != has_changed_flag[counter-1]:
+                animate_flag[counter-1] = 2
+                has_changed_flag[counter-1] = data['score']
+                has_changed_flag[counter-1] = 1
+        else:
+            has_changed_flag[counter-1] = data['score']
         player_card_holder = 'player_card_' + str(counter)
         
         # If animation_flag == 0, proceed as normal
@@ -614,6 +623,7 @@ def draw_players(game:Game):
                 if animate_alpha[counter-1] > 255:
                     animate_alpha[counter-1] = 255
                     animate_flag[counter-1] -= 1
+                    has_changed_flag[counter-1] = 0
         
         SCREEN.blit(name,(name_x,name_y))
         SCREEN.blit(score,(score_x,score_y))
