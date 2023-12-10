@@ -222,7 +222,7 @@ def define_player_window():
                     lmb_clicked = True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    return SCENE_MENU
+                    return (SCENE_MENU,None)
             if event.type == bg_timer:
                 scroll_bg()
                 
@@ -264,9 +264,9 @@ def create_game(player_size):
         pass
     elif isinstance(data,Game): 
         returned = send_message('received game', receive=False)
-        if returned == SCENE_DISCONNECT: return returned
+        if returned == SCENE_DISCONNECT: return (returned,None)
         return SCENE_WAITING, data
-    elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
+    elif data == SCENE_DISCONNECT: return (SCENE_DISCONNECT,None)
     
 
 def loading(game: Game):
@@ -337,9 +337,10 @@ def loading(game: Game):
 
 
 def view_games():
+    games = None
     data = send_message('fetch games')
     if isinstance(data,dict): games = data
-    elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
+    elif data == SCENE_DISCONNECT: return (data,None)
     running = True
     
     while running:
@@ -354,14 +355,14 @@ def view_games():
                     lmb_clicked = True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    return SCENE_MENU
+                    return (SCENE_MENU,None)
             if event.type == bg_timer:
                 scroll_bg()
         
         draw_bg(images['mechanics_bg'],mechanics_bg_rect)
         data = send_message('fetch games')
         if isinstance(data,dict): games = data
-        elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
+        elif data == SCENE_DISCONNECT: return (data,None)
 
         if isinstance(games, dict) and len(games) > 0:
             game_box_rects = []
@@ -419,10 +420,10 @@ def join_game(game_id:int):
         pass
     elif isinstance(data,Game): 
         returned = send_message('received game', receive=False)
-        if returned == SCENE_DISCONNECT: return returned
+        if returned == SCENE_DISCONNECT: return (returned,None)
         if data.has_started(): return SCENE_GAME, data
         else: return SCENE_WAITING, data
-    elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
+    elif data == SCENE_DISCONNECT: return (SCENE_DISCONNECT,None)
 
 
 def send_message(message, receive=True):
