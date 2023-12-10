@@ -158,5 +158,57 @@ genknowledge_qna = [
   [
     "When cooking with alcohol, not all of the liquor \"burns off\". Up to what percentage of the alcohol remains in the food?",
     "85%"
+  ],
+  [
+    'When did Facebook first lanched?',
+    '2004'
+  ],
+  [
+    'In the Catholic Church, the Bishop of Rome is a title more commonly known as what?',
+    'Pope'
+  ],
+  [
+    'What series marked the Golden Age of Television Series?',
+    'The Sopranos'
+  ],
+  [
+    'While often confused with llamas, what breed of camelid is used for fleece production, while its cousin the llama is not?',
+    'Alpaca'
+  ],
+  [
+    'What do you call animals that eat everything (meat, plants and fish)?',
+    'Omnivore'
+  ],
+  [
+    'What bird cannot move their eyeballs?',
+    'Owl'
+  ],
+  [
+    'In 1929 what ingredient was removed from Coca-Cola?',
+    'Cocaine'
+  ],
+  [
+    'The color of the road that Dorothy and her friends walked on when going to the Emerald City in the Wizard of Oz',
+    'Yellow'
+  ],
+  [
+    'What Disney Princess was inspired by a real person?',
+    'Pocahontas'
+  ],
+  [
+    'Where did the Olympics originate?',
+    'Greece'
+  ],
+  [
+    'What is the largest organ of the human body?',
+    'skin'
+  ],
+  [
+    'The total amount of degrees in a square',
+    '360'
+  ],
+  [
+    'What do you call a group of crows',
+    'Murder'
   ]
 ]
