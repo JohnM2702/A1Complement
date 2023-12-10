@@ -1082,4 +1082,4 @@ while True:
     elif current_scene == SCENE_DISCONNECT:
         current_scene = disconnect_scene()
     elif current_scene == SCENE_CATEGORY:
-        current_scene, argument = define_category()
+        current_scene, argument = define_category(argument)
