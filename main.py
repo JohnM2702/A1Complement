@@ -14,6 +14,18 @@ SCREEN = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Guessing Galore")
 clock = pygame.time.Clock()
 
+# Scenes 
+SCENE_ENTER_IP      = 0
+SCENE_PLAYER_NAME   = 1
+SCENE_MENU          = 2
+SCENE_MECHANICS     = 3
+SCENE_CREATE_GAME   = 4
+SCENE_VIEW_GAMES    = 5
+SCENE_WAITING       = 6
+SCENE_GAME          = 7
+SCENE_GAME_OVER     = 8
+SCENE_DISCONNECT    = 9
+
 # Colors
 BLUE = '#537188'
 BEIGE = '#E1D4BB'
@@ -186,7 +198,7 @@ def mechanics():
             SCREEN.blit(images['exit_btn_hover'],exit_btn_rect)
             if lmb_clicked:
                 btn_sfx_click.play()
-                main_menu()
+                return SCENE_MENU
         else: 
             mechanics_btn_hover = False
             credits_btn_hover = False
@@ -244,11 +256,14 @@ def define_player_window():
 
 def create_game(player_size):
     data = send_message(f'create,{player_size},{name_input.value}')
+    print(f'received: {data}')  # debugging
     if isinstance(data, str):
         # Handle case when max number of games have been reached
         # e.g. Display notice to player 
         pass
-    elif isinstance(data,Game): loading(data)
+    elif isinstance(data,Game): 
+        return SCENE_WAITING, data
+    elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
     
 
 def loading(game: Game):
@@ -308,17 +323,20 @@ def loading(game: Game):
             data = network.receive_game_data()
         except:
             print('[Waiting for Players]: Something went wrong.')
-            disconnect_scene()
+            return SCENE_DISCONNECT
 
+        if data == SCENE_DISCONNECT: return SCENE_DISCONNECT
         if not isinstance(data,Game): continue
         game = data
 
     pygame.time.set_timer(loading_timer, 0) # Disable timer
-    game_proper(game)
+    return SCENE_GAME, game
 
 
 def view_games():
-    games = send_message('fetch games')
+    data = send_message('fetch games')
+    if isinstance(data,dict[int,Game]): games = data
+    elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
     running = True
     
     while running:
@@ -338,7 +356,9 @@ def view_games():
                 scroll_bg()
         
         draw_bg(images['mechanics_bg'],mechanics_bg_rect)
-        games = send_message('fetch games')
+        data = send_message('fetch games')
+        if isinstance(data,dict[int,Game]): games = data
+        elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
 
         if isinstance(games, dict) and len(games) > 0:
             game_box_rects = []
@@ -394,8 +414,9 @@ def join_game(game_id:int):
         # e.g. Display notice to player 
         pass
     elif isinstance(data,Game): 
-        if data.has_started(): game_proper(data)
-        else: loading(data)
+        if data.has_started(): return SCENE_GAME, data
+        else: return SCENE_WAITING, data
+    elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
 
 
 def send_message(message, receive=True):
@@ -404,7 +425,7 @@ def send_message(message, receive=True):
         network.send(message)
     except Exception as e:
         print(f'Failed to send message: {e}')
-        disconnect_scene()
+        return SCENE_DISCONNECT
 
 
 def check_answer_similarity(to_check, to_refer):
@@ -457,7 +478,8 @@ def game_proper(game: Game):
             if event.type == round_timer:   # time's up
                 timer_stopped = True
                 if not score_sent: # didnt guess correctly within the time limit
-                    send_message(f'score,{round_score}', receive=False)
+                    data = send_message(f'score,{round_score}', receive=False)
+                    if data == SCENE_DISCONNECT: return SCENE_DISCONNECT
                     score_sent = True
                 round_score = 0
                 time_limit = 10000
@@ -478,7 +500,8 @@ def game_proper(game: Game):
                             round_score *= similarity_result
                             round_score = int(round_score)
 
-                            send_message(f'score,{round_score},', receive=False)
+                            data = send_message(f'score,{round_score},', receive=False)
+                            if data == SCENE_DISCONNECT: return SCENE_DISCONNECT
                             game.update_score(network.ip,round_score,index)
                             score_sent = True
                     answer_input.value = ""       
@@ -490,32 +513,32 @@ def game_proper(game: Game):
             # if data != '': print(f'1received: {data}')    # debugging
             if isinstance(data,Game): game = data 
             elif isinstance(data,str) and 'round end' in data:
-                send_message('received notice', receive=False)
+                data = send_message('received notice', receive=False)
+                if data == SCENE_DISCONNECT: return SCENE_DISCONNECT
                 timer_stopped = False
                 score_sent = False
                 index += 1
-                if index >= 10: 
-                    end_screen(game)
-                    break
+                if index >= 10: return SCENE_GAME_OVER, game
                 pygame.time.set_timer(round_timer,time_limit,1)
                 timer_start_time = pygame.time.get_ticks()
+            elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
         else:
             data = receive_game_data()
             # if data != '': print(f'2received: {data}')    # debugging
             if isinstance(data,Game): game = data 
             elif isinstance(data,str) and 'round end' in data and score_sent:
-                send_message('received notice', receive=False)
+                data = send_message('received notice', receive=False)
+                if data == SCENE_DISCONNECT: return SCENE_DISCONNECT
                 pygame.time.set_timer(round_timer,0)
                 round_score = 0
                 time_limit = 10000
                 answer_input.value = ""
                 score_sent = False
                 index += 1
-                if index >= 10: 
-                    end_screen(game)
-                    break
+                if index >= 10: return SCENE_GAME_OVER, game
                 pygame.time.set_timer(round_timer,time_limit,1)
                 timer_start_time = pygame.time.get_ticks()
+            elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
                  
         draw_bg(bg=images['game_bg'],draw_logo=False,color=BLUE)
         SCREEN.blit(images['question_box'],(23,18))
@@ -540,7 +563,7 @@ def receive_game_data():
         return network.receive_game_data()
     except:
         print('Something went wrong. Restarting network...')
-        disconnect_scene()
+        return SCENE_DISCONNECT
     
 
 # If you want to animate a card getting correct
@@ -672,11 +695,11 @@ def main_menu():
                     if lmb_clicked:
                         btn_sfx_click.play()
                         if rect[0] is images['create_btn']:
-                            define_player_window()
+                            return SCENE_CREATE_GAME
                         elif rect[0] is images['join_btn']:
-                            view_games()
+                            return SCENE_VIEW_GAMES
                         else: 
-                            mechanics()
+                            return SCENE_MECHANICS
                 else: 
                     rect[3] = False
                         
@@ -712,7 +735,7 @@ def player_name():
                 if event.key == pygame.K_RETURN and player_name_value != '':
                     btn_sfx_click.play()
                     screen_transition.play()
-                    main_menu()
+                    return SCENE_MENU
                 # typing_sfx should only appear when highlighted sob
                 typing_sfx()
 
@@ -747,7 +770,7 @@ def player_name():
                     print(player_name_value,"has opened the game")
                     btn_sfx_click.play()
                     screen_transition.play()
-                    main_menu()
+                    return SCENE_MENU
             else: 
                 enter_btn_hovered = False
                 
@@ -779,7 +802,7 @@ def ip_input_scene():
                     btn_sfx_click.play()
                     network = Network(ip_value)
                     if network.connect():
-                        player_name()
+                        return SCENE_PLAYER_NAME
                     else:
                         sfx_error.play()
                         ip_input.value = ""
@@ -819,7 +842,7 @@ def ip_input_scene():
                     btn_sfx_click.play()
                     network = Network(ip_value)
                     if network.connect():
-                        player_name()
+                        return SCENE_PLAYER_NAME
                     else:
                         sfx_error.play()
                         ip_input.value = ""
@@ -840,7 +863,8 @@ def disconnect_scene():
         
         for event in events:
             if event.type == pygame.QUIT:
-                main_menu()
+                pygame.quit()
+                exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     lmb_clicked = True
@@ -866,7 +890,7 @@ def disconnect_scene():
             SCREEN.blit(images['return_btn_hover'], return_btn_rect)
             if lmb_clicked:
                 btn_sfx_click.play()
-                ip_input_scene()
+                return SCENE_ENTER_IP
         else: 
             return_btn_hover = False
                 
@@ -898,7 +922,7 @@ def end_screen(game:Game):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN and player_name_value != '':
                     btn_sfx_click.play()
-                    main_menu()
+                    return SCENE_MENU
 
         # Draw the screen
         draw_bg(bg=images['game_bg'], draw_logo=False,color=BLUE)
@@ -928,7 +952,7 @@ def end_screen(game:Game):
             SCREEN.blit(images['exit_game_hover'], exit_game_btn_rect)
             if lmb_clicked:
                 btn_sfx_click.play()
-                main_menu()
+                return SCENE_MENU
         else: 
             enter_btn_hovered = False
             SCREEN.blit(images['exit_game_btn'], exit_game_btn_rect)
@@ -939,4 +963,28 @@ def end_screen(game:Game):
         clock.tick(FPS)
 
 
-ip_input_scene()
+# Main game loop
+current_scene = SCENE_ENTER_IP
+argument = None
+
+while True:
+    if current_scene == SCENE_ENTER_IP:
+        current_scene, argument = ip_input_scene()
+    elif current_scene == SCENE_PLAYER_NAME:
+        current_scene, argument = player_name()
+    elif current_scene == SCENE_MENU:
+        current_scene, argument = main_menu()
+    elif current_scene == SCENE_MECHANICS:
+        current_scene, argument = mechanics()
+    elif current_scene == SCENE_CREATE_GAME:
+        current_scene, argument = define_player_window()
+    elif current_scene == SCENE_VIEW_GAMES:
+        current_scene, argument = view_games()
+    elif current_scene == SCENE_WAITING:
+        current_scene, argument = loading(argument)
+    elif current_scene == SCENE_GAME:
+        current_scene, argument = game_proper(argument)
+    elif current_scene == SCENE_GAME_OVER:
+        current_scene, argument = end_screen(argument)
+    elif current_scene == SCENE_DISCONNECT:
+        current_scene, argument = disconnect_scene()
