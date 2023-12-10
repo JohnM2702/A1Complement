@@ -150,7 +150,7 @@ def mechanics():
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    running = False
+                    return SCENE_MENU
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     lmb_clicked = True
@@ -222,7 +222,7 @@ def define_player_window():
                     lmb_clicked = True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    running = False
+                    return SCENE_MENU
             if event.type == bg_timer:
                 scroll_bg()
                 
@@ -246,7 +246,8 @@ def define_player_window():
                 if lmb_clicked:
                     btn_sfx_click.play()
                     running = False
-                    create_game(rect[4])
+                    returned = create_game(rect[4])
+                    if returned is not None: return returned
             else: 
                 rect[3] = False
 
@@ -335,7 +336,7 @@ def loading(game: Game):
 
 def view_games():
     data = send_message('fetch games')
-    if isinstance(data,dict[int,Game]): games = data
+    if isinstance(data,dict): games = data
     elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
     running = True
     
@@ -351,13 +352,13 @@ def view_games():
                     lmb_clicked = True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    running = False
+                    return SCENE_MENU
             if event.type == bg_timer:
                 scroll_bg()
         
         draw_bg(images['mechanics_bg'],mechanics_bg_rect)
         data = send_message('fetch games')
-        if isinstance(data,dict[int,Game]): games = data
+        if isinstance(data,dict): games = data
         elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
 
         if isinstance(games, dict) and len(games) > 0:
@@ -395,7 +396,8 @@ def view_games():
                     SCREEN.blit(images['game_box_hover'],rect[0])
                     if lmb_clicked:
                         btn_sfx_click.play()
-                        join_game(rect[4])
+                        returned = join_game(rect[4])
+                        if returned is not None: return returned
                 else: 
                     SCREEN.blit(images['game_box'],rect[0])
                 SCREEN.blit(circle,rect[1])
@@ -965,26 +967,26 @@ def end_screen(game:Game):
 
 # Main game loop
 current_scene = SCENE_ENTER_IP
-argument = ()
+argument = None
 
 while True:
     if current_scene == SCENE_ENTER_IP:
-        current_scene, argument = ip_input_scene()
+        current_scene = ip_input_scene()
     elif current_scene == SCENE_PLAYER_NAME:
-        current_scene, argument = player_name()
+        current_scene = player_name()
     elif current_scene == SCENE_MENU:
-        current_scene, argument = main_menu()
+        current_scene = main_menu()
     elif current_scene == SCENE_MECHANICS:
-        current_scene, argument = mechanics()
+        current_scene = mechanics()
     elif current_scene == SCENE_CREATE_GAME:
         current_scene, argument = define_player_window()
     elif current_scene == SCENE_VIEW_GAMES:
-        current_scene, argument = view_games()
+        current_scene = view_games()
     elif current_scene == SCENE_WAITING:
-        current_scene, argument = loading(*argument)
+        current_scene, argument = loading(argument)
     elif current_scene == SCENE_GAME:
-        current_scene, argument = game_proper(*argument)
+        current_scene, argument = game_proper(argument)
     elif current_scene == SCENE_GAME_OVER:
-        current_scene, argument = end_screen(*argument)
+        current_scene = end_screen(argument)
     elif current_scene == SCENE_DISCONNECT:
-        current_scene, argument = disconnect_scene()
+        current_scene = disconnect_scene()
