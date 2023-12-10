@@ -607,7 +607,7 @@ def draw_players(game:Game):
         if animate_flag[counter-1] == 0:
             if data['score'] != has_changed_flag[counter-1]:
                 animate_flag[counter-1] = 2
-                has_changed_flag[counter-1] = data['score']
+            has_changed_flag[counter-1] = data['score']
         else:
             has_changed_flag[counter-1] = data['score']
         player_card_holder = 'player_card_' + str(counter)
@@ -636,7 +636,6 @@ def draw_players(game:Game):
                 if animate_alpha[counter-1] > 255:
                     animate_alpha[counter-1] = 255
                     animate_flag[counter-1] -= 1
-                    has_changed_flag[counter-1] = 0
         
         SCREEN.blit(name,(name_x,name_y))
         SCREEN.blit(score,(score_x,score_y))
