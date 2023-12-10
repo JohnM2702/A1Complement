@@ -72,15 +72,15 @@ class Server:
                 
                 try:
                     # Client just joined a game, send them the Game object
-                    conn.sendall(pickle.dumps(game))
+                    # conn.sendall(pickle.dumps(game))
 
                     while True:
                         conn.sendall(pickle.dumps(game))
-                        print(f'sent game to {ip}')
+                        print(f'sent initial game to {ip}')
                         data = conn.recv(2048).decode()
                         if not data: raise socket.error('lost connection')
                         if 'received game' in data:
-                            print(f'{ip} has received the Game object')
+                            print(f'{ip} has received the initial Game')
                             break
                     
                     # WAITING: Wait for other players to join

@@ -258,15 +258,21 @@ def define_player_window():
 def create_game(player_size):
     data = send_message(f'create,{player_size},{name_input.value}')
     print(f'received: {data}')  # debugging
-    if isinstance(data, str):
+
+    if data == SCENE_DISCONNECT: return (data,None)
+    elif isinstance(data, str) and data == 'max games reached':
         # Handle case when max number of games have been reached
         # e.g. Display notice to player 
-        pass
-    elif isinstance(data,Game): 
-        returned = send_message('received game', receive=False)
-        if returned == SCENE_DISCONNECT: return (returned,None)
-        return SCENE_WAITING, data
-    elif data == SCENE_DISCONNECT: return (SCENE_DISCONNECT,None)
+        return (SCENE_MENU,None)
+    elif not isinstance(data,Game):
+        while True:
+            data = receive_game_data() 
+            if isinstance(data,Game):
+                break
+
+    returned = send_message('received game', receive=False)
+    if returned == SCENE_DISCONNECT: return (returned,None)
+    return SCENE_WAITING, data
     
 
 def loading(game: Game):
@@ -413,17 +419,25 @@ def view_games():
 
 def join_game(game_id:int):
     data = send_message(f'join,{game_id},{name_input.value}')
-    if isinstance(data, str):
+    print(f'received: {data}')  # debugging
+
+    if data == SCENE_DISCONNECT: return (data,None)
+    elif isinstance(data, str) and data == 'game is full':
         # Handle case when game is full 
         # i.e. (other client joined just milliseconds before you)
-        # e.g. Display notice to player 
-        pass
-    elif isinstance(data,Game): 
-        returned = send_message('received game', receive=False)
-        if returned == SCENE_DISCONNECT: return (returned,None)
-        if data.has_started(): return SCENE_GAME, data
-        else: return SCENE_WAITING, data
-    elif data == SCENE_DISCONNECT: return (SCENE_DISCONNECT,None)
+        # e.g. Display notice to player
+        return (SCENE_MENU,None)
+    elif not isinstance(data,Game):
+        while True:
+            data = receive_game_data() 
+            if isinstance(data,Game):
+                break
+
+    returned = send_message('received game', receive=False)
+    if returned == SCENE_DISCONNECT: return (returned,None)
+    
+    if data.has_started(): return SCENE_GAME, data
+    else: return SCENE_WAITING, data
 
 
 def send_message(message, receive=True):
