@@ -260,7 +260,7 @@ def create_game(player_size):
     print(f'received: {data}')  # debugging
 
     if data == SCENE_DISCONNECT: return (data,None)
-    elif isinstance(data, str):
+    elif isinstance(data, str) and data == 'max games reached':
         # Handle case when max number of games have been reached
         # e.g. Display notice to player 
         return (SCENE_MENU,None)
@@ -269,7 +269,7 @@ def create_game(player_size):
             data = receive_game_data() 
             if isinstance(data,Game):
                 break
-            
+
     returned = send_message('received game', receive=False)
     if returned == SCENE_DISCONNECT: return (returned,None)
     return SCENE_WAITING, data
@@ -422,7 +422,7 @@ def join_game(game_id:int):
     print(f'received: {data}')  # debugging
 
     if data == SCENE_DISCONNECT: return (data,None)
-    elif isinstance(data, str):
+    elif isinstance(data, str) and data == 'game is full':
         # Handle case when game is full 
         # i.e. (other client joined just milliseconds before you)
         # e.g. Display notice to player
