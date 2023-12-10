@@ -604,11 +604,10 @@ def draw_players(game:Game):
     for id, data in players.items():
         name = lalezar_30.render(data['name'],1,'black')
         score = lalezar_30.render(str(data['score']),1,'black')
-        if data['score'] != 0 and has_changed_flag[counter-1] != 0:
+        if animate_flag[counter-1] == 0:
             if data['score'] != has_changed_flag[counter-1]:
                 animate_flag[counter-1] = 2
                 has_changed_flag[counter-1] = data['score']
-                has_changed_flag[counter-1] = 1
         else:
             has_changed_flag[counter-1] = data['score']
         player_card_holder = 'player_card_' + str(counter)
