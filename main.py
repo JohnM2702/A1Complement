@@ -20,8 +20,8 @@ BEIGE = '#E1D4BB'
 
 # Fonts
 inria_20 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),20)
-inria_50 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),50)
 inria_40 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),40)
+inria_50 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),50)
 inria_50.align = pygame.FONT_CENTER
 inria_italic_20 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Italic.ttf'),20)
 inria_italic_40 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Italic.ttf'),40)
@@ -248,16 +248,15 @@ def create_game(player_size):
         # Handle case when max number of games have been reached
         # e.g. Display notice to player 
         pass
-    else: loading(data)
+    elif isinstance(data,Game): loading(data)
     
 
 def loading(game: Game):
     global animate_flag
     pygame.time.set_timer(loading_timer, 830)  # every 50 frames (50/60)
-    waiting = True
     loading_array = [0, 0, 0, 0, 0]
 
-    while waiting:
+    while game.get_player_count() < game.get_player_size():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -308,16 +307,11 @@ def loading(game: Game):
         try:
             data = network.receive_game_data()
         except:
-            waiting = False
             print('[Waiting for Players]: Something went wrong.')
-            return
+            disconnect_scene()
 
-        if not isinstance(data,Game):
-            continue
-        
+        if not isinstance(data,Game): continue
         game = data
-        
-        waiting = game.get_player_count() < game.get_player_size()
 
     pygame.time.set_timer(loading_timer, 0) # Disable timer
     game_proper(game)
@@ -399,7 +393,7 @@ def join_game(game_id:int):
         # i.e. (other client joined just milliseconds before you)
         # e.g. Display notice to player 
         pass
-    else: 
+    elif isinstance(data,Game): 
         if data.has_started(): game_proper(data)
         else: loading(data)
 
@@ -410,6 +404,7 @@ def send_message(message, receive=True):
         network.send(message)
     except Exception as e:
         print(f'Failed to send message: {e}')
+        disconnect_scene()
 
 
 def check_answer_similarity(to_check, to_refer):
@@ -493,7 +488,7 @@ def game_proper(game: Game):
                 
         if timer_stopped:
             data = receive_game_data()
-            if data != '': print(f'1received: {data}')
+            # if data != '': print(f'1received: {data}')    # debugging
             if isinstance(data,str) and 'round end' in data:
                 send_message('received notice', receive=False)
                 timer_stopped = False
@@ -502,10 +497,9 @@ def game_proper(game: Game):
                 pygame.time.set_timer(round_timer,time_limit,1)
                 timer_start_time = pygame.time.get_ticks()
             elif isinstance(data,Game): game = data 
-            
         else:
             data = receive_game_data()
-            if data != '': print(f'2received: {data}')
+            # if data != '': print(f'2received: {data}')    # debugging
             if isinstance(data,Game): game = data 
             elif isinstance(data,str) and 'round end' in data and score_sent:
                 send_message('received notice', receive=False)
@@ -535,25 +529,13 @@ def game_proper(game: Game):
         pygame.display.update()
         clock.tick(FPS)
 
-def leaderboard():
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
-            if event.type == bg_timer:
-                scroll_bg()
-
-        draw_bg(bg=images['game_bg'],draw_logo=True,color=BLUE)
 
 def receive_game_data():
     try:
         return network.receive_game_data()
     except:
         print('Something went wrong. Restarting network...')
-        # idk if this works
-        restart_network()
-        main_menu()
+        disconnect_scene()
     
 
 # If you want to animate a card getting correct
@@ -630,12 +612,8 @@ def scroll_bg():
     bg_y += 1
     if bg_y > bg_height:
         bg_y = 0  
-
-
-def restart_network():
-    global network 
-    network = Network(server_ip)
     
+
 bgm_flag = 0
 def main_menu():
     global bgm_flag
@@ -732,8 +710,6 @@ def player_name():
                     main_menu()
                 # typing_sfx should only appear when highlighted sob
                 typing_sfx()
-
-            
 
         draw_bg(images['loading_bg'],loading_bg_rect)
 
@@ -885,7 +861,7 @@ def disconnect_scene():
             SCREEN.blit(images['return_btn_hover'], return_btn_rect)
             if lmb_clicked:
                 btn_sfx_click.play()
-                main_menu()
+                ip_input_scene()
         else: 
             return_btn_hover = False
                 
