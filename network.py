@@ -1,6 +1,6 @@
-import re
+import dill as pickle
 import socket
-import pickle
+import re
 
 class Network:
     def __init__(self, server_ip):
@@ -24,7 +24,9 @@ class Network:
     def connect(self):
         if self.is_valid_ip(self.server):    
             try:
+                self.client.settimeout(1)
                 self.client.connect(self.addr)
+                self.client.settimeout(None)
                 return True
             except Exception as e:
                 print(f'Failed to connect to the server: {e}')
@@ -37,7 +39,6 @@ class Network:
             if not isinstance(data, str):
                 data = str(data)
             self.client.sendall(data.encode('utf-8'))
-            print(f'sent message: {data}')
             return self.receive_pickle()
         except socket.error as e:
             print(e)
@@ -49,25 +50,17 @@ class Network:
             self.client.sendall(data.encode('utf-8'))
         except socket.error as e:
             print(e)
-    
-    def send_create(self, player_size, name):
-        data = f'create,{player_size},{self.ip},{name}'
-        return self.send_and_receive(data)
-
-    def send_join(self, game_id, name):
-        data = f'join,{game_id},{self.ip},{name}'
-        return self.send_and_receive(data)
 
     def receive_game_data(self):
         try:
-            self.client.sendall(str.encode('waiting'))
+            self.client.sendall(str.encode(' '))
             return self.receive_pickle()
         except socket.error as e:
             print(e)
     
     def receive_pickle(self):
         # Buffer to store received data
-        buffer_size = 1024
+        buffer_size = 4096
         data_buffer = b""
 
         while True:
