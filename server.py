@@ -91,7 +91,7 @@ class Server:
                     self.handle_waiting(conn,game)
                     
                     # GAME: Play the actual game
-                    self.handle_game(conn,game,ip)
+                    self.handle_game(conn,game,game_id,ip)
 
                 except socket.error as e:
                     print(f"ERROR: {e}")
@@ -143,9 +143,21 @@ class Server:
                 player_count = updated_count
             else: conn.sendall(pickle.dumps(''))
     
-    def handle_game(self, conn: socket.socket, game: Game, ip: str):
+    def handle_game(self, conn: socket.socket, game: Game, game_id:int, ip: str):
         index = 0
         while True:
+            if not game_id in self.games:
+                # Notify player if all others players left the game
+                while True:
+                    conn.sendall(pickle.dumps('game deleted'))
+                    print(f'sent game deleted notice to {ip}')
+                    data = conn.recv(2048).decode()
+                    if not data: raise socket.error('lost connection')
+                    if 'received deleted notice' in data:
+                        print(f'{ip} has received the deleted notice')
+                        break
+                break
+
             broadcast_thread = None
             time_limit = 10000
             
@@ -167,7 +179,6 @@ class Server:
                     broadcast_thread = threading.Thread(target=self.broadcast_with_exclusion, args=(game,ip))
                     broadcast_thread.start()      
                 else:
-                    # conn.send(pickle.dumps(''))
                     conn.sendall(pickle.dumps(game))
 
             print(f'Round {index} is over, {ip}')

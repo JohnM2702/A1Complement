@@ -186,7 +186,8 @@ def mechanics():
                 mechanics_flag[0] = 1
                 mechanics_flag[1] = 0
                 window_counter = 1
-        if credits_smol_rect.collidepoint(mx, my):
+                
+        elif credits_smol_rect.collidepoint(mx, my):
             if not credits_btn_hover:
                 btn_sfx_hover.play()
                 credits_btn_hover = True
@@ -195,7 +196,8 @@ def mechanics():
                 btn_sfx_click.play()
                 mechanics_flag[0] = 0
                 mechanics_flag[1] = 1
-        if exit_btn_rect.collidepoint(mx, my):
+                
+        elif exit_btn_rect.collidepoint(mx, my):
             if not exit_btn_hover:
                 btn_sfx_hover.play()
                 exit_btn_hover = True
@@ -206,6 +208,7 @@ def mechanics():
         else: 
             mechanics_btn_hover = False
             credits_btn_hover = False
+            exit_btn_hover = False
         pygame.display.update()
         clock.tick(FPS)
         
@@ -515,7 +518,7 @@ def game_proper(game: Game):
                 timer_stopped = True
                 if not score_sent: # didnt guess correctly within the time limit
                     data = send_message(f'score,{round_score}', receive=False)
-                    if data == SCENE_DISCONNECT: return SCENE_DISCONNECT
+                    if data == SCENE_DISCONNECT: return data,None
                     score_sent = True
                 round_score = 0
                 time_limit = 10000
@@ -537,7 +540,7 @@ def game_proper(game: Game):
                             round_score = int(round_score)
 
                             data = send_message(f'score,{round_score},', receive=False)
-                            if data == SCENE_DISCONNECT: return SCENE_DISCONNECT
+                            if data == SCENE_DISCONNECT: return data,None
                             game.update_score(network.ip,round_score,index)
                             score_sent = True
                     answer_input.value = ""       
@@ -547,34 +550,47 @@ def game_proper(game: Game):
         if timer_stopped:
             data = receive_game_data()
             # if data != '': print(f'1received: {data}')    # debugging
-            if isinstance(data,Game): game = data 
+            if isinstance(data,Game): 
+                game = data 
             elif isinstance(data,str) and 'round end' in data:
                 data = send_message('received notice', receive=False)
-                if data == SCENE_DISCONNECT: return SCENE_DISCONNECT
+                if data == SCENE_DISCONNECT: return data,None
+
                 timer_stopped = False
                 score_sent = False
                 index += 1
-                if index >= 10: return SCENE_GAME_OVER, game
+                if index >= 10: return SCENE_GAME_OVER,game
                 pygame.time.set_timer(round_timer,time_limit,1)
                 timer_start_time = pygame.time.get_ticks()
-            elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
+            elif isinstance(data,str) and 'game deleted' in data:
+                returned = send_message('received deleted notice', receive=False)
+                if returned == SCENE_DISCONNECT: return returned,None
+                return SCENE_GAME_OVER,game
+            elif data == SCENE_DISCONNECT: 
+                return data,None
         else:
             data = receive_game_data()
             # if data != '': print(f'2received: {data}')    # debugging
             if isinstance(data,Game): game = data 
             elif isinstance(data,str) and 'round end' in data and score_sent:
                 data = send_message('received notice', receive=False)
-                if data == SCENE_DISCONNECT: return SCENE_DISCONNECT
+                if data == SCENE_DISCONNECT: return data,None
+
                 pygame.time.set_timer(round_timer,0)
                 round_score = 0
                 time_limit = 10000
                 answer_input.value = ""
                 score_sent = False
                 index += 1
-                if index >= 10: return SCENE_GAME_OVER, game
+                if index >= 10: return SCENE_GAME_OVER,game
                 pygame.time.set_timer(round_timer,time_limit,1)
                 timer_start_time = pygame.time.get_ticks()
-            elif data == SCENE_DISCONNECT: return SCENE_DISCONNECT
+            elif isinstance(data,str) and 'game deleted' in data:
+                returned = send_message('received deleted notice', receive=False)
+                if returned == SCENE_DISCONNECT: return returned,None
+                return SCENE_GAME_OVER,game
+            elif data == SCENE_DISCONNECT: 
+                return data,None
                  
         draw_bg(bg=images['game_bg'],draw_logo=False,color=BLUE)
         SCREEN.blit(images['question_box'],(23,18))

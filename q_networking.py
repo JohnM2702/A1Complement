@@ -178,7 +178,7 @@ networking_qna = [
     [
         'The ____ Topology passes its signal in one direction until it reaches its destination',
         'ring'
-    ]
+    ],
     [
         'The ______ defines the procedures and functions that physical devices and interfaces have to perform for transmission to occur',
         'Physical Layer'
@@ -198,7 +198,7 @@ networking_qna = [
     [
         'It is the set of techniques that allows the simultaneous transmission of multiple signals across a single data link',
         'Multiplexing'
-    ]
+    ],
     [
         'A type of noise where one wire affects another wire',
         'crosstalk'
