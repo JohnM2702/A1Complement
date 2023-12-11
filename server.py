@@ -139,20 +139,11 @@ class Server:
     def handle_game(self, conn: socket.socket, game: Game, game_id:int, ip: str):
         index = 0
         while True:
-            time_limit = 10000
-            
             print(f'round {index} start {ip}')
             while not game.is_round_finished(index):
                 data = conn.recv(2048).decode().split(',')
                 if not data: 
                     raise socket.error('lost connection')
-                elif data[0] == 'add time':
-                    time_limit += 5000
-                    conn.sendall(pickle.dumps(time_limit))
-                elif data[0] == 'subtract time':
-                    self.broadcast_with_exclusion('subtract 3000',ip)
-                elif data[0] == 'disable hint':
-                    self.broadcast_with_exclusion('disable hint',ip)
                 elif data[0] == 'score':
                     print(f'score received: {data[1]} from {ip}')
                     game.update_score(ip,int(data[1]),index)

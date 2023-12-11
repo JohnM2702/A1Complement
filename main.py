@@ -13,6 +13,7 @@ WIDTH,HEIGHT = 1024,768
 SCREEN = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Guessing Galore")
 clock = pygame.time.Clock()
+TIME_LIMIT = 10000
 
 # Scenes 
 SCENE_ENTER_IP      = 0
@@ -487,22 +488,16 @@ def check_answer_similarity(to_check, to_refer):
 
 def game_proper(game: Game):
     notifcation.play()
-
-    # Temporary max input length
-    # ideal: dynamically set when client can receive answers from server
-    manager = None
-    answer_input = TextInputVisualizer(manager,lalezar_50,cursor_width=0)
+    answer_input = TextInputVisualizer(lalezar_50,cursor_width=0)
     
     QnA = game.get_qna()
     index = 0  
     data = None
-
     round_score = 0
-    time_limit = 10000
     score_sent = False
     timer_stopped = False
 
-    pygame.time.set_timer(round_timer,time_limit,1)
+    pygame.time.set_timer(round_timer,TIME_LIMIT,1)
     timer_start_time = pygame.time.get_ticks()
     
     while True:
@@ -520,7 +515,6 @@ def game_proper(game: Game):
                     if data == SCENE_DISCONNECT: return data,None
                     score_sent = True
                 round_score = 0
-                time_limit = 10000
                 answer_input.value = ""
             if event.type == pygame.KEYDOWN:   
                 if event.key == pygame.K_RETURN:
@@ -559,7 +553,7 @@ def game_proper(game: Game):
                 score_sent = False
                 index += 1
                 if index >= 10: return SCENE_GAME_OVER,game
-                pygame.time.set_timer(round_timer,time_limit,1)
+                pygame.time.set_timer(round_timer,TIME_LIMIT,1)
                 timer_start_time = pygame.time.get_ticks()
             elif isinstance(data,str) and 'game deleted' in data:
                 returned = send_message('received deleted notice', receive=False)
@@ -577,12 +571,11 @@ def game_proper(game: Game):
 
                 pygame.time.set_timer(round_timer,0)
                 round_score = 0
-                time_limit = 10000
                 answer_input.value = ""
                 score_sent = False
                 index += 1
                 if index >= 10: return SCENE_GAME_OVER,game
-                pygame.time.set_timer(round_timer,time_limit,1)
+                pygame.time.set_timer(round_timer,TIME_LIMIT,1)
                 timer_start_time = pygame.time.get_ticks()
             elif isinstance(data,str) and 'game deleted' in data:
                 returned = send_message('received deleted notice', receive=False)
@@ -910,9 +903,8 @@ def ip_input_scene():
         clock.tick(FPS) 
         
 def disconnect_scene():
-    return_btn_hover = False    
-    manager = TextInputManager(validator=lambda input: len(input) <= 15)
-        
+    return_btn_hover = False   
+    
     while True:
         lmb_clicked = False
         events = pygame.event.get()
