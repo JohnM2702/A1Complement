@@ -32,8 +32,6 @@ BLUE = '#537188'
 BEIGE = '#E1D4BB'
 
 # Fonts
-inria_20 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),20)
-inria_40 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),40)
 inria_50 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),50)
 inria_50.align = pygame.FONT_CENTER
 inria_italic_20 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Italic.ttf'),20)
@@ -88,13 +86,10 @@ win_label_rect = images['congrats_label_2'].get_rect(topleft=(485,367))
 
 # Mechanics Images
 exit_btn_rect = images['exit_btn'].get_rect(topleft=(52,55))
-left_btn_rect = images['left_arrow_btn'].get_rect(topleft=(317,651))
-right_btn_rect = images['right_arrow_btn'].get_rect(topleft=(536,651))
 mechanics_smol_rect = images['mechanics_smol_btn'].get_rect(topleft=(139,114))
 credits_smol_rect = images['credits_smol_btn'].get_rect(topleft=(139,201))
 return_btn_rect = images['return_btn'].get_rect(topleft=(402,575))
 
-pcard_width, pcard_height = images['player_card'].get_size()
 gbox_width, gbox_height = images['game_box'].get_size()
 qbox_width, qbox_height = images['question_box'].get_size()
 bg_height = images['menu_bg'].get_height()
@@ -871,9 +866,6 @@ def ip_input_scene():
 
                 # typing_sfx should only appear when highlighted sob
                 typing_sfx()
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_BACKSPACE:
-                    backspace_pressed = False
 
         draw_bg(images['loading_bg'],loading_bg_rect)
 
@@ -993,7 +985,7 @@ def end_screen(game:Game):
 
         # Label
         window_label = inria_italic_40.render(highlight_name[0],2,'White')
-        text_w, text_h = window_label.get_size()
+        text_w = window_label.get_width()
         x_center = ((691 - text_w) // 2) + 294
         victory_b = images['victory_b'].get_rect(topleft = (x_center+(text_w)+17,301))
         SCREEN.blit(window_label,(x_center,298))

@@ -14,12 +14,7 @@ class Server:
         self.clients: dict[str,socket.socket] = {}
         self.games: dict[int,Game] = {}
         self.id_generator = IdGenerator()
-
         self.start()
-
-    def debug_clients(self):
-        print(self.clients)
-        print("Length:",len(self.clients))
 
     def start(self):
         print(f"Server is starting...")
