@@ -475,6 +475,8 @@ def check_answer_similarity(to_check, to_refer):
     #returns percentage of answer similarity
     i = 0
     score = 0
+    to_check = to_check.strip()
+    to_refer = to_refer.strip()
     if len(to_check) != len(to_refer): return 0
     while i < len(to_refer):
         if to_check[i].isalpha():
