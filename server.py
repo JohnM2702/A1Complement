@@ -76,8 +76,6 @@ class Server:
                 
                 try:
                     # Client just joined a game, send them the Game object
-                    # conn.sendall(pickle.dumps(game))
-
                     while True:
                         conn.sendall(pickle.dumps(game))
                         print(f'sent initial game to {ip}')
@@ -146,18 +144,6 @@ class Server:
     def handle_game(self, conn: socket.socket, game: Game, game_id:int, ip: str):
         index = 0
         while True:
-            if not game_id in self.games:
-                # Notify player if all others players left the game
-                while True:
-                    conn.sendall(pickle.dumps('game deleted'))
-                    print(f'sent game deleted notice to {ip}')
-                    data = conn.recv(2048).decode()
-                    if not data: raise socket.error('lost connection')
-                    if 'received deleted notice' in data:
-                        print(f'{ip} has received the deleted notice')
-                        break
-                break
-
             broadcast_thread = None
             time_limit = 10000
             
@@ -180,6 +166,17 @@ class Server:
                     broadcast_thread.start()      
                 else:
                     conn.sendall(pickle.dumps(game))
+                
+                # Check if game still exists
+                if not game_id in self.games:
+                    while True:
+                        conn.sendall(pickle.dumps('game deleted'))
+                        print(f'sent game deleted notice to {ip}')
+                        data = conn.recv(2048).decode()
+                        if not data: raise socket.error('lost connection')
+                        if 'received deleted notice' in data:
+                            print(f'{ip} has received the deleted notice')
+                            return
 
             print(f'Round {index} is over, {ip}')
 
