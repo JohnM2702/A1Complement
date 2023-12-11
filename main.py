@@ -488,7 +488,7 @@ def check_answer_similarity(to_check, to_refer):
 
 def game_proper(game: Game):
     notifcation.play()
-    answer_input = TextInputVisualizer(lalezar_50,cursor_width=0)
+    answer_input = TextInputVisualizer(None,lalezar_50,cursor_width=0)
     
     QnA = game.get_qna()
     index = 0  
@@ -904,7 +904,7 @@ def ip_input_scene():
         
 def disconnect_scene():
     return_btn_hover = False   
-    
+
     while True:
         lmb_clicked = False
         events = pygame.event.get()
