@@ -959,6 +959,7 @@ def disconnect_scene():
 
 def end_screen(game:Game):
     global bgm_flag
+    exit_game_btn_hover = False
     highlight_name = game.get_highest_scorer()
     
     bgm_flag = 0
@@ -966,7 +967,7 @@ def end_screen(game:Game):
     victory.play()    
     
     while True:
-        exit_btn_hover = False
+        
         lmb_clicked = False
         player_name_value = name_input.value
         events = pygame.event.get()
@@ -1003,19 +1004,18 @@ def end_screen(game:Game):
         SCREEN.blit(images['victory_a'], victory_a)
         SCREEN.blit(images['victory_b'], victory_b)
 
-
         mx, my = pygame.mouse.get_pos()
         # Handle button hover & sfx
         if exit_game_btn_rect.collidepoint(mx, my):
-            if not exit_btn_hover:
+            if not exit_game_btn_hover:
                 btn_sfx_hover.play()
-                exit_btn_hover = True
+                exit_game_btn_hover = True
             SCREEN.blit(images['exit_game_hover'], exit_game_btn_rect)
             if lmb_clicked:
                 btn_sfx_click.play()
                 return SCENE_MENU
         else: 
-            exit_btn_hover = False
+            exit_game_btn_hover = False
             SCREEN.blit(images['exit_game_btn'], exit_game_btn_rect)
         
         draw_leaderboard(game)

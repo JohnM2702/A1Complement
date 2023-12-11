@@ -160,7 +160,7 @@ genknowledge_qna = [
     "85%"
   ],
   [
-    'When did Facebook first lanched?',
+    'What year did Facebook first lanched?',
     '2004'
   ],
   [
