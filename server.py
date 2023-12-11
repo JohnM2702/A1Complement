@@ -139,7 +139,6 @@ class Server:
     def handle_game(self, conn: socket.socket, game: Game, game_id:int, ip: str):
         index = 0
         while True:
-            broadcast_thread = None
             time_limit = 10000
             
             print(f'round {index} start {ip}')
@@ -174,9 +173,6 @@ class Server:
                             return
 
             print(f'Round {index} is over, {ip}')
-
-            if isinstance(broadcast_thread,threading.Thread):
-                broadcast_thread.join()
 
             while True:
                 if game.get_received_count(ip) >= game.get_player_count() - 1:
