@@ -80,10 +80,6 @@ networking_qna = [
         'SMTP'
     ],
     [
-        'The ____________ translates internet domain and host names to IP address.',
-        'domain name system'
-    ],
-    [
         'When displaying a web page, the application layer uses the _____________',
         'HTTP protocol'
     ],
@@ -112,10 +108,6 @@ networking_qna = [
         'Flow control'
     ],
     [
-        'The sizes of source and destination port address in TCP header are ___________ respectively.',
-        '16-bits and 16-bits'
-    ],
-    [
         'What is the header size of a UDP packet?',
         '8 bytes'
     ],
@@ -125,7 +117,7 @@ networking_qna = [
     ],
     [
         'The size of an IP address in IPv6 is _________ ',
-        '128 bits'
+        '128'
     ],
     [
         'Internet works on _______ ',
@@ -134,10 +126,6 @@ networking_qna = [
     [
         'Multiple processes on destinations at transport layer are identified by __________',
         'Port number'
-    ],
-    [
-        'Range of port numbers in Internet model is __________',
-        '0 and 65,535(16-bit)'
     ],
     [
         'The combination of an IP address and port number is called as ________ ',

@@ -4,7 +4,6 @@ class Game:
     def __init__(self, id, player_size, category):
         self.QnA = []
         self.started = False
-        # self.ended = False
         self.category = category
         self.round_scores_count = 0 # How many players sent their score at the end of a round
         self.rounds = [0 for _ in range (10)]   # 0: not finished, 1: finished
@@ -20,9 +19,6 @@ class Game:
     
     def add_player(self, player_id, name):
         self.players[player_id] = {'name': name, 'score': 0, 'received_count': 0}
-
-    # def get_player(self, player_id):
-    #     return self.players.get(player_id, None)
 
     def get_category(self):
         return self.category
@@ -65,18 +61,9 @@ class Game:
         if self.round_scores_count >= self.get_player_count():
             self.round_scores_count = 0
             self.rounds[index] = 1
-    
-    # def get_score(self, ip):
-    #     return self.players[ip]['score']
 
     def is_round_finished(self, index):
         return self.rounds[index]
-
-    # def end_game(self):
-    #     self.ended = False
-
-    # def is_finished(self):
-    #     return False if 0 in self.rounds else True
         
     def get_received_count(self, ip):
         return self.players[ip]['received_count']
@@ -91,3 +78,4 @@ class Game:
         highest_score = max(player['score'] for player in self.players.values())
         top_players = [player_data['name'] for player_id, player_data in self.players.items() if player_data['score'] == highest_score]
         return top_players
+    

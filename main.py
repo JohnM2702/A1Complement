@@ -13,6 +13,7 @@ WIDTH,HEIGHT = 1024,768
 SCREEN = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Guessing Galore")
 clock = pygame.time.Clock()
+TIME_LIMIT = 10000
 
 # Scenes 
 SCENE_ENTER_IP      = 0
@@ -32,8 +33,6 @@ BLUE = '#537188'
 BEIGE = '#E1D4BB'
 
 # Fonts
-inria_20 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),20)
-inria_40 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),40)
 inria_50 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Regular.ttf'),50)
 inria_50.align = pygame.FONT_CENTER
 inria_italic_20 = pygame.font.Font(os.path.join('assets','fonts','InriaSans-Italic.ttf'),20)
@@ -88,13 +87,10 @@ win_label_rect = images['congrats_label_2'].get_rect(topleft=(485,367))
 
 # Mechanics Images
 exit_btn_rect = images['exit_btn'].get_rect(topleft=(52,55))
-left_btn_rect = images['left_arrow_btn'].get_rect(topleft=(317,651))
-right_btn_rect = images['right_arrow_btn'].get_rect(topleft=(536,651))
 mechanics_smol_rect = images['mechanics_smol_btn'].get_rect(topleft=(139,114))
 credits_smol_rect = images['credits_smol_btn'].get_rect(topleft=(139,201))
 return_btn_rect = images['return_btn'].get_rect(topleft=(402,575))
 
-pcard_width, pcard_height = images['player_card'].get_size()
 gbox_width, gbox_height = images['game_box'].get_size()
 qbox_width, qbox_height = images['question_box'].get_size()
 bg_height = images['menu_bg'].get_height()
@@ -178,9 +174,10 @@ def mechanics():
         # Handle button hover & sfx
         if mechanics_smol_rect.collidepoint(mx, my):
             if not mechanics_btn_hover:
-                btn_sfx_hover.play()
+                if mechanics_flag[0] == 0 :btn_sfx_hover.play()
                 mechanics_btn_hover = True
-            SCREEN.blit(images['mechanics_smol_btn_hover'],mechanics_smol_rect)
+            if mechanics_flag[0] == 0:
+                SCREEN.blit(images['mechanics_smol_btn_hover'],mechanics_smol_rect)
             if lmb_clicked:
                 btn_sfx_click.play()
                 mechanics_flag[0] = 1
@@ -189,9 +186,10 @@ def mechanics():
                 
         elif credits_smol_rect.collidepoint(mx, my):
             if not credits_btn_hover:
-                btn_sfx_hover.play()
+                if mechanics_flag[1] == 0: btn_sfx_hover.play()
                 credits_btn_hover = True
-            SCREEN.blit(images['credits_smol_btn_hover'],credits_smol_rect)
+            if mechanics_flag[1] == 0:
+                SCREEN.blit(images['credits_smol_btn_hover'],credits_smol_rect)
             if lmb_clicked:
                 btn_sfx_click.play()
                 mechanics_flag[0] = 0
@@ -473,6 +471,8 @@ def check_answer_similarity(to_check, to_refer):
     #returns percentage of answer similarity
     i = 0
     score = 0
+    to_check = to_check.strip()
+    to_refer = to_refer.strip()
     if len(to_check) != len(to_refer): return 0
     while i < len(to_refer):
         if to_check[i].isalpha():
@@ -488,22 +488,16 @@ def check_answer_similarity(to_check, to_refer):
 
 def game_proper(game: Game):
     notifcation.play()
-
-    # Temporary max input length
-    # ideal: dynamically set when client can receive answers from server
-    manager = None
-    answer_input = TextInputVisualizer(manager,lalezar_50,cursor_width=0)
+    answer_input = TextInputVisualizer(None,lalezar_50,cursor_width=0)
     
     QnA = game.get_qna()
     index = 0  
     data = None
-
     round_score = 0
-    time_limit = 10000
     score_sent = False
     timer_stopped = False
 
-    pygame.time.set_timer(round_timer,time_limit,1)
+    pygame.time.set_timer(round_timer,TIME_LIMIT,1)
     timer_start_time = pygame.time.get_ticks()
     
     while True:
@@ -521,7 +515,6 @@ def game_proper(game: Game):
                     if data == SCENE_DISCONNECT: return data,None
                     score_sent = True
                 round_score = 0
-                time_limit = 10000
                 answer_input.value = ""
             if event.type == pygame.KEYDOWN:   
                 if event.key == pygame.K_RETURN:
@@ -560,7 +553,7 @@ def game_proper(game: Game):
                 score_sent = False
                 index += 1
                 if index >= 10: return SCENE_GAME_OVER,game
-                pygame.time.set_timer(round_timer,time_limit,1)
+                pygame.time.set_timer(round_timer,TIME_LIMIT,1)
                 timer_start_time = pygame.time.get_ticks()
             elif isinstance(data,str) and 'game deleted' in data:
                 returned = send_message('received deleted notice', receive=False)
@@ -578,12 +571,11 @@ def game_proper(game: Game):
 
                 pygame.time.set_timer(round_timer,0)
                 round_score = 0
-                time_limit = 10000
                 answer_input.value = ""
                 score_sent = False
                 index += 1
                 if index >= 10: return SCENE_GAME_OVER,game
-                pygame.time.set_timer(round_timer,time_limit,1)
+                pygame.time.set_timer(round_timer,TIME_LIMIT,1)
                 timer_start_time = pygame.time.get_ticks()
             elif isinstance(data,str) and 'game deleted' in data:
                 returned = send_message('received deleted notice', receive=False)
@@ -869,9 +861,6 @@ def ip_input_scene():
 
                 # typing_sfx should only appear when highlighted sob
                 typing_sfx()
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_BACKSPACE:
-                    backspace_pressed = False
 
         draw_bg(images['loading_bg'],loading_bg_rect)
 
@@ -914,9 +903,8 @@ def ip_input_scene():
         clock.tick(FPS) 
         
 def disconnect_scene():
-    return_btn_hover = False    
-    manager = TextInputManager(validator=lambda input: len(input) <= 15)
-        
+    return_btn_hover = False   
+
     while True:
         lmb_clicked = False
         events = pygame.event.get()
@@ -959,6 +947,7 @@ def disconnect_scene():
 
 def end_screen(game:Game):
     global bgm_flag
+    exit_game_btn_hover = False
     highlight_name = game.get_highest_scorer()
     
     bgm_flag = 0
@@ -966,7 +955,7 @@ def end_screen(game:Game):
     victory.play()    
     
     while True:
-        exit_btn_hover = False
+        
         lmb_clicked = False
         player_name_value = name_input.value
         events = pygame.event.get()
@@ -990,7 +979,7 @@ def end_screen(game:Game):
 
         # Label
         window_label = inria_italic_40.render(highlight_name[0],2,'White')
-        text_w, text_h = window_label.get_size()
+        text_w = window_label.get_width()
         x_center = ((691 - text_w) // 2) + 294
         victory_b = images['victory_b'].get_rect(topleft = (x_center+(text_w)+17,301))
         SCREEN.blit(window_label,(x_center,298))
@@ -1003,19 +992,18 @@ def end_screen(game:Game):
         SCREEN.blit(images['victory_a'], victory_a)
         SCREEN.blit(images['victory_b'], victory_b)
 
-
         mx, my = pygame.mouse.get_pos()
         # Handle button hover & sfx
         if exit_game_btn_rect.collidepoint(mx, my):
-            if not exit_btn_hover:
+            if not exit_game_btn_hover:
                 btn_sfx_hover.play()
-                exit_btn_hover = True
+                exit_game_btn_hover = True
             SCREEN.blit(images['exit_game_hover'], exit_game_btn_rect)
             if lmb_clicked:
                 btn_sfx_click.play()
                 return SCENE_MENU
         else: 
-            exit_btn_hover = False
+            exit_game_btn_hover = False
             SCREEN.blit(images['exit_game_btn'], exit_game_btn_rect)
         
         draw_leaderboard(game)
