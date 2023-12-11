@@ -186,7 +186,8 @@ def mechanics():
                 mechanics_flag[0] = 1
                 mechanics_flag[1] = 0
                 window_counter = 1
-        if credits_smol_rect.collidepoint(mx, my):
+                
+        elif credits_smol_rect.collidepoint(mx, my):
             if not credits_btn_hover:
                 btn_sfx_hover.play()
                 credits_btn_hover = True
@@ -195,7 +196,8 @@ def mechanics():
                 btn_sfx_click.play()
                 mechanics_flag[0] = 0
                 mechanics_flag[1] = 1
-        if exit_btn_rect.collidepoint(mx, my):
+                
+        elif exit_btn_rect.collidepoint(mx, my):
             if not exit_btn_hover:
                 btn_sfx_hover.play()
                 exit_btn_hover = True
@@ -206,6 +208,7 @@ def mechanics():
         else: 
             mechanics_btn_hover = False
             credits_btn_hover = False
+            exit_btn_hover = False
         pygame.display.update()
         clock.tick(FPS)
         
