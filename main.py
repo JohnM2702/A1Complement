@@ -178,9 +178,10 @@ def mechanics():
         # Handle button hover & sfx
         if mechanics_smol_rect.collidepoint(mx, my):
             if not mechanics_btn_hover:
-                btn_sfx_hover.play()
+                if mechanics_flag[0] == 0 :btn_sfx_hover.play()
                 mechanics_btn_hover = True
-            SCREEN.blit(images['mechanics_smol_btn_hover'],mechanics_smol_rect)
+            if mechanics_flag[0] == 0:
+                SCREEN.blit(images['mechanics_smol_btn_hover'],mechanics_smol_rect)
             if lmb_clicked:
                 btn_sfx_click.play()
                 mechanics_flag[0] = 1
@@ -189,9 +190,10 @@ def mechanics():
                 
         elif credits_smol_rect.collidepoint(mx, my):
             if not credits_btn_hover:
-                btn_sfx_hover.play()
+                if mechanics_flag[1] == 0: btn_sfx_hover.play()
                 credits_btn_hover = True
-            SCREEN.blit(images['credits_smol_btn_hover'],credits_smol_rect)
+            if mechanics_flag[1] == 0:
+                SCREEN.blit(images['credits_smol_btn_hover'],credits_smol_rect)
             if lmb_clicked:
                 btn_sfx_click.play()
                 mechanics_flag[0] = 0
